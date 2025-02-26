@@ -72,34 +72,7 @@ new p5((p) => {
 
   // Draw function runs continuously
   p.draw = () => {
-    if (!isPlaying) return
-
-    p.background(30, 10)
-
-    // Draw some animated circles
-    const time = p.millis() * 0.001
-    for (let i = 0; i < 5; i++) {
-      const size = 50 + Math.sin(time + i) * 20
-      const x = p.width * (0.2 + i * 0.15)
-      const y = p.height * 0.5 + Math.sin(time * 0.5 + i) * 100
-
-      p.noStroke()
-      p.fill(
-        127 + 127 * Math.sin(time * 0.3 + i * 0.5),
-        127 + 127 * Math.sin(time * 0.4 + i * 0.5),
-        127 + 127 * Math.sin(time * 0.5 + i * 0.5),
-        200,
-      )
-      p.ellipse(x, y, size, size)
-    }
-
-    // Draw interactive element that follows mouse
-    if (p.mouseX > 0 && p.mouseY > 0 && p.mouseX < p.width && p.mouseY < p.height) {
-      p.stroke(255)
-      p.strokeWeight(2)
-      p.noFill()
-      p.ellipse(p.mouseX, p.mouseY, 40 + Math.sin(time * 2) * 10)
-    }
+    
   }
 
   // Handle window resize
@@ -112,9 +85,7 @@ new p5((p) => {
   // Mouse interaction
   p.mousePressed = () => {
     if (p.mouseX > 0 && p.mouseY > 0 && p.mouseX < p.width && p.mouseY < p.height) {
-      p.fill(Math.random() * 255, Math.random() * 255, Math.random() * 255)
-      p.noStroke()
-      p.ellipse(p.mouseX, p.mouseY, 80, 80)
+      //mousePressed within window
     }
   }
 })
