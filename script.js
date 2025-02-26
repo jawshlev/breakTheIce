@@ -8,8 +8,6 @@ const tabButtons = document.querySelectorAll(".tab-btn")
 const tabPanes = document.querySelectorAll(".tab-pane")
 const currentYearElement = document.getElementById("current-year")
 
-// Set current year in footer
-currentYearElement.textContent = new Date().getFullYear()
 
 // State
 let isPlaying = true
