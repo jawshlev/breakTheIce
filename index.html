@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Experience</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Load p5.js from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <h1>Interactive Experience</h1>
+      <div class="controls">
+        <button id="play-pause-btn" class="btn">
+          <svg id="pause-icon" class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="4" width="4" height="16"></rect>
+            <rect x="14" y="4" width="4" height="16"></rect>
+          </svg>
+          <svg id="play-icon" class="icon hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span id="play-pause-text">Pause</span>
+        </button>
+        <button id="reset-btn" class="btn">
+          <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 4v6h-6"></path>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          Reset
+        </button>
+      </div>
+    </header>
+
+    <!-- Main content -->
+    <main>
+      <!-- Canvas container -->
+      <div id="canvas-container"></div>
+
+      <!-- Info tabs -->
+      <div class="info-section">
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="description">Description</button>
+          <button class="tab-btn" data-tab="controls">Controls</button>
+          <button class="tab-btn" data-tab="about">About</button>
+        </div>
+        
+        <div class="tab-content">
+          <div id="description" class="tab-pane active">
+            <h2>
+              <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              Description
+            </h2>
+            <p>
+              This is an interactive p5.js experience. The animation shows colorful circles that move in a wave pattern.
+              The experience is designed to be both visually appealing and interactive.
+            </p>
+            <p>
+              You can interact with the canvas by moving your mouse over it and clicking to create new elements.
+              Use the controls at the top to pause/play the animation or reset it.
+            </p>
+          </div>
+          
+          <div id="controls" class="tab-pane">
+            <h2>Controls</h2>
+            <ul>
+              <li><strong>Mouse Movement:</strong> Move your cursor over the canvas to interact with elements</li>
+              <li><strong>Click:</strong> Create a new colored circle at the cursor position</li>
+              <li><strong>Play/Pause Button:</strong> Toggle the animation</li>
+              <li><strong>Reset Button:</strong> Restart the experience</li>
+            </ul>
+          </div>
+          
+          <div id="about" class="tab-pane">
+            <h2>About</h2>
+            <p>
+              This interactive experience was created using p5.js, a JavaScript library that makes coding accessible
+              for artists, designers, educators, and beginners. It's perfect for creating visual and interactive experiences
+              on the web.
+            </p>
+            <p>
+              p5.js is inspired by Processing and brings the original goals of Processing to the web. Learn more at
+              <a href="https://p5js.org/" target="_blank" rel="noopener noreferrer">p5js.org</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+      <p>© <span id="current-year"></span> Interactive Experience. Created with p5.js</p>
+    </footer>
+  </div>
+
+  <!-- Load our JavaScript -->
+  <script src="script.js"></script>
+</body>
+</html>
+
