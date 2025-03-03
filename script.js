@@ -8,8 +8,6 @@ const tabButtons = document.querySelectorAll(".tab-btn")
 const tabPanes = document.querySelectorAll(".tab-pane")
 const currentYearElement = document.getElementById("current-year")
 
-// Set current year in footer
-currentYearElement.textContent = new Date().getFullYear()
 
 // State
 let isPlaying = true
@@ -263,9 +261,7 @@ new p5((p) => {
   // Mouse interaction
   p.mousePressed = () => {
     if (p.mouseX > 0 && p.mouseY > 0 && p.mouseX < p.width && p.mouseY < p.height) {
-      p.fill(Math.random() * 255, Math.random() * 255, Math.random() * 255)
-      p.noStroke()
-      p.ellipse(p.mouseX, p.mouseY, 80, 80)
+      //mousePressed within window
     }
   }
   function gotHands(results) {
