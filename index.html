@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Interactive Experience</title>
+  <title>Interactive Experience with Gesture Detection</title>
   <link rel="stylesheet" href="styles.css">
-  <!-- Load p5.js from CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+  <!-- ml5.js library -->
+  <script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
 </head>
 <body>
   <div class="container">
     <!-- Header -->
     <header>
-      <h1>Interactive Experience</h1>
+      <h1>Gesture-Based Interactive Experience</h1>
       <div class="controls">
         <button id="play-pause-btn" class="btn">
           <svg id="pause-icon" class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -45,6 +46,7 @@
           <button class="tab-btn active" data-tab="description">Description</button>
           <button class="tab-btn" data-tab="controls">Controls</button>
           <button class="tab-btn" data-tab="about">About</button>
+          <button class="tab-btn" data-tab="gestures">Gestures</button>
         </div>
         
         <div class="tab-content">
@@ -58,11 +60,11 @@
               Description
             </h2>
             <p>
-              This is an interactive p5.js experience. The animation shows colorful circles that move in a wave pattern.
-              The experience is designed to be both visually appealing and interactive.
+              This is an interactive p5.js experience with ml5.js HandPose detection. The animation shows colorful circles that move in a wave pattern
+              and respond to your hand gestures through your webcam.
             </p>
             <p>
-              You can interact with the canvas by moving your mouse over it and clicking to create new elements.
+              You can interact with the canvas by moving your mouse, clicking, or performing a pointing gesture with your index finger.
               Use the controls at the top to pause/play the animation or reset it.
             </p>
           </div>
@@ -80,14 +82,23 @@
           <div id="about" class="tab-pane">
             <h2>About</h2>
             <p>
-              This interactive experience was created using p5.js, a JavaScript library that makes coding accessible
-              for artists, designers, educators, and beginners. It's perfect for creating visual and interactive experiences
-              on the web.
+              This interactive experience was created using p5.js and ml5.js with HandPose. p5.js is a JavaScript library that makes coding accessible
+              for artists, designers, educators, and beginners.
             </p>
             <p>
-              p5.js is inspired by Processing and brings the original goals of Processing to the web. Learn more at
-              <a href="https://p5js.org/" target="_blank" rel="noopener noreferrer">p5js.org</a>.
+              ml5.js is a user-friendly machine learning library built on top of TensorFlow.js, and HandPose is a hand detection model that
+              can track hand landmarks in real-time. Learn more at <a href="https://ml5js.org/" target="_blank" rel="noopener noreferrer">ml5js.org</a>.
             </p>
+          </div>
+          
+          <div id="gestures" class="tab-pane">
+            <h2>Gesture Controls</h2>
+            <p>This experience uses your webcam to detect the following gestures:</p>
+            <ul>
+              <li><strong>Pointing Index Finger:</strong> Raise your index finger while keeping other fingers folded to trigger an effect</li>
+              <li><strong>Mouse Interactions:</strong> Use your mouse to interact with the canvas directly</li>
+            </ul>
+            <p><em>Note: For best results, ensure good lighting, face the camera directly, and position your hand clearly in the frame.</em></p>
           </div>
         </div>
       </div>
@@ -95,7 +106,7 @@
 
     <!-- Footer -->
     <footer>
-      <p>Created with p5.js, ml5.js, vercel-v0 boiler plate </p>
+      <p>Created with p5.js, ml5.js, HandPose <span id="current-year"></span></p>
     </footer>
   </div>
 
@@ -103,4 +114,3 @@
   <script src="script.js"></script>
 </body>
 </html>
-
