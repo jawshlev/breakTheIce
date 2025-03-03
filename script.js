@@ -76,7 +76,7 @@ new p5((p) => {
     p.background(30)
     p.frameRate(60)
     //create video capture
-    video = p.createCapture(p.VIDEO);
+    video = p.createCapture({ video: { facingMode: "user" }, audio: false });
     video.size(640, 480);
     video.hide();
     handPose.detectStart(video, gotHands);
@@ -84,54 +84,37 @@ new p5((p) => {
 
   // Draw function runs continuously
   p.draw = () => {
+    p.background(30);
+  
     if (video) {
-      // Display unflipped video
+      // Flip the video horizontally
+      p.push();
+      p.translate(p.width, 0);
+      p.scale(-1, 1);
       p.image(video, 0, 0, p.width, p.height);
-    }
-    
-    for (let i = 0; i < hands.length; i++) {
-      let hand = hands[i];
-      for (let j = 0; j < hand.keypoints.length; j++) {
-        let keypoint = hand.keypoints[j];
-        
-        // Scale the keypoints to match the canvas dimensions
-        let x = p.map(keypoint.x, 0, video.width, 0, p.width);
-        let y = p.map(keypoint.y, 0, video.height, 0, p.height);
-        
-        p.fill(0, 255, 0);
-        p.noStroke();
-        p.circle(x, y, 10);
+      p.pop();
+  
+      // Draw hand keypoints directly on the full canvas
+      for (let i = 0; i < hands.length; i++) {
+        let hand = hands[i];
+        for (let j = 0; j < hand.keypoints.length; j++) {
+          let keypoint = hand.keypoints[j];
+  
+          // Map keypoints directly to the entire canvas
+          let mappedX = p.map(keypoint.x, 0, video.width, 0, p.width);
+          let mappedY = p.map(keypoint.y, 0, video.height, 0, p.height);
+  
+          // Flip X coordinate to match the mirrored video
+          let finalX = p.width - mappedX;
+  
+          p.fill(0, 255, 0);
+          p.noStroke();
+          p.circle(finalX, mappedY, 10);
+        }
       }
     }
-    if (!isPlaying) return
-
-    p.background(30, 10)
-
-    // Draw some animated circles
-    const time = p.millis() * 0.001
-    for (let i = 0; i < 5; i++) {
-      const size = 50 + Math.sin(time + i) * 20
-      const x = p.width * (0.2 + i * 0.15)
-      const y = p.height * 0.5 + Math.sin(time * 0.5 + i) * 100
-
-      p.noStroke()
-      p.fill(
-        127 + 127 * Math.sin(time * 0.3 + i * 0.5),
-        127 + 127 * Math.sin(time * 0.4 + i * 0.5),
-        127 + 127 * Math.sin(time * 0.5 + i * 0.5),
-        200,
-      )
-      p.ellipse(x, y, size, size)
-    }
-
-    // Draw interactive element that follows mouse
-    if (p.mouseX > 0 && p.mouseY > 0 && p.mouseX < p.width && p.mouseY < p.height) {
-      p.stroke(255)
-      p.strokeWeight(2)
-      p.noFill()
-      p.ellipse(p.mouseX, p.mouseY, 40 + Math.sin(time * 2) * 10)
-    }
-  }
+  };
+  
 
   // Handle window resize
   p.windowResize = () => {
