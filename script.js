@@ -93,13 +93,7 @@ new p5((p) => {
       p.scale(-1, 1);
       p.image(video, 0, 0, p.width, p.height);
       p.pop();
-      let returnValue = fourFingerClosed(hands, 75);
-      console.log("Function returned:", returnValue);
-      let returnthumbValue = thumbClosed(hands, 75);
-      console.log("Function returned:", returnthumbValue);
-      if(!returnthumbValue && returnValue){
-        console.log(thumbPos()); 
-      }
+      console.log(lighter());
       // for (let i = 0; i < hands.length; i++) {
       //   let hand = hands[i];
   
@@ -118,7 +112,15 @@ new p5((p) => {
       // }
     }
   };
-  
+  function lighter(){
+    let returnValue = fourFingerClosed(hands, 75);
+    let returnthumbValue = thumbClosed(hands, 75);
+    if(!returnthumbValue && returnValue){
+      return thumbPos(); 
+    }
+    return null;
+  }
+
   function thumbPos(){
     let x4, y4, x11, y11;
   
