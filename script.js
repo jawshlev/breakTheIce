@@ -59,7 +59,14 @@ resetBtn.addEventListener("click", () => {
 new p5((p) => {
   // Store reference to p5 instance
   p5Instance = p
-
+  let handPose;
+  let video;
+  let hands = [];
+  p.preload = () => {
+    // Load the handPose model
+    console.log("Preloading HandPose model...");
+    handPose = ml5.handPose();
+  }
   // Setup function runs once
   p.setup = () => {
     // Create canvas that fills the container
@@ -68,10 +75,34 @@ new p5((p) => {
     canvas.parent("canvas-container")
     p.background(30)
     p.frameRate(60)
+    //create video capture
+    video = p.createCapture(p.VIDEO);
+    video.size(640, 480);
+    video.hide();
+    handPose.detectStart(video, gotHands);
   }
 
   // Draw function runs continuously
   p.draw = () => {
+    if (video) {
+      // Display unflipped video
+      p.image(video, 0, 0, p.width, p.height);
+    }
+    
+    for (let i = 0; i < hands.length; i++) {
+      let hand = hands[i];
+      for (let j = 0; j < hand.keypoints.length; j++) {
+        let keypoint = hand.keypoints[j];
+        
+        // Scale the keypoints to match the canvas dimensions
+        let x = p.map(keypoint.x, 0, video.width, 0, p.width);
+        let y = p.map(keypoint.y, 0, video.height, 0, p.height);
+        
+        p.fill(0, 255, 0);
+        p.noStroke();
+        p.circle(x, y, 10);
+      }
+    }
     if (!isPlaying) return
 
     p.background(30, 10)
@@ -117,5 +148,10 @@ new p5((p) => {
       p.ellipse(p.mouseX, p.mouseY, 80, 80)
     }
   }
+  function gotHands(results) {
+    // save the output to the hands variable
+    hands = results;
+  }
+  
 })
 
