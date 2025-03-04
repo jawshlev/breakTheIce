@@ -80,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let handPose;
     let video;
     let hands = [];
+    let erase;
     p.preload = () => {
     // Load the handPose model
     console.log("Preloading HandPose model...");
@@ -119,7 +120,8 @@ document.addEventListener('DOMContentLoaded', () => {
         p.scale(-1, 1);
         p.image(video, 0, 0, p.width, p.height);
         p.pop();
-        console.log(lighter());
+        //console.log(lighter());
+
         // for (let i = 0; i < hands.length; i++) {
         //   let hand = hands[i];
     
@@ -154,6 +156,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         p.endShape(p.CLOSE);
       });
+      
+      if (lighter() != null) {
+        eraseCheck();
+      }
+    }
+
+    function eraseCheck(xCheck, yCheck) {
+      console.log({xCheck, yCheck});
+      let bodiesFound = Matter.Query.point(Matter.Composite.allBodies(world), {x: xCheck, y: yCheck});
+      if (bodiesFound.length > 0) {
+        Matter.World.remove(world, bodiesFound[0]);
+        console.log("erased");
+      }
     }
 
     function lighter(){
@@ -187,7 +202,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
         // If both keypoints are found, check the distance
         if (x4, y4) {
-          return { x: x4, y: y4 };
+          eraseCheck(x4,y4);
+          return {x4, y4};
         }
         return null;
       }
@@ -284,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
           let middleDistance = p.dist(x12, y12, x9, y9);
           let ringDistance = p.dist(x16, y16, x13, y13);
           let pinkyDistance = p.dist(x20, y20, x17, y17);
-          console.log(`Distance between keypoints 5 and 8: ${indexDistance}`);
+          //console.log(`Distance between keypoints 5 and 8: ${indexDistance}`);
           if(indexDistance <= threshold &&
             middleDistance <= threshold &&
             ringDistance <= threshold &&
