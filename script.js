@@ -120,24 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
         p.scale(-1, 1);
         p.image(video, 0, 0, p.width, p.height);
         p.pop();
-        //console.log(lighter());
-
-        // for (let i = 0; i < hands.length; i++) {
-        //   let hand = hands[i];
-    
-        //   for (let j = 0; j < hand.keypoints.length; j++) {
-        //     let keypoint = hand.keypoints[j];
-    
-        //     // Map keypoints to the canvas
-        //     let mappedX = p.map(keypoint.x, 0, video.width, 0, p.width);
-        //     let mappedY = p.map(keypoint.y, 0, video.height, 0, p.height);
-        //     let finalX = p.width - mappedX; // Flip to match mirrored video
-            
-        //     p.fill(255, 0, 255);
-        //     p.noStroke();
-        //     p.circle(finalX, mappedY, 10);
-        //   }
-        // }
       }
 
       // Update physics engine
@@ -157,31 +139,70 @@ document.addEventListener('DOMContentLoaded', () => {
         p.endShape(p.CLOSE);
       });
       
-      if (lighter() != null) {
-        eraseCheck();
+      if (lighter() !== null) {
+        const thumbPosition = thumbPos();
+        if (thumbPosition !== null) {  // Ensure thumbPosition is not null
+          eraseCheck(thumbPosition.x, thumbPosition.y);
+        } else {
+          console.log("thumbPos() returned null");
+        }
       }
     }
 
     function eraseCheck(xCheck, yCheck) {
-      console.log({xCheck, yCheck});
-      let bodiesFound = Matter.Query.point(Matter.Composite.allBodies(world), {x: xCheck, y: yCheck});
+      if (xCheck === undefined || yCheck === undefined) {
+        console.log("Erase check skipped: Invalid coordinates");
+        return;
+      }
+    
+      console.log("Erase check at:", { xCheck, yCheck });
+    
+      let bodiesFound = Matter.Query.point(Matter.Composite.allBodies(world), { x: xCheck, y: yCheck });
+    
       if (bodiesFound.length > 0) {
         Matter.World.remove(world, bodiesFound[0]);
-        console.log("erased");
+        console.log("Erased a brick at:", { xCheck, yCheck });
+      } else {
+        console.log("No bricks found to erase.");
       }
     }
 
-    function lighter(){
-      let returnValue = fourFingerClosed(hands, 75);
-      let returnthumbValue = thumbClosed(hands, 75);
-      if(!returnthumbValue && returnValue){
-        return thumbPos(); 
+    //handWireFrame
+    //function handPointCircles(){
+      // for (let i = 0; i < hands.length; i++) {
+        //   let hand = hands[i];
+    
+        //   for (let j = 0; j < hand.keypoints.length; j++) {
+        //     let keypoint = hand.keypoints[j];
+    
+        //     // Map keypoints to the canvas
+        //     let mappedX = p.map(keypoint.x, 0, video.width, 0, p.width);
+        //     let mappedY = p.map(keypoint.y, 0, video.height, 0, p.height);
+        //     let finalX = p.width - mappedX; // Flip to match mirrored video
+            
+        //     p.fill(255, 0, 255);
+        //     p.noStroke();
+        //     p.circle(finalX, mappedY, 10);
+        //   }
+        // }
+    //};
+
+    function lighter() {
+      let fingersClosed = fourFingerClosed(hands, 75);  // Checks if fingers are closed
+      let thumbIsClosed = thumbClosed(hands, 75);  // Checks if thumb is closed
+    
+      if (fingersClosed && !thumbIsClosed) {  // Only return thumb position if fingers are closed but thumb is open
+        const thumbPosition = thumbPos();
+        if (thumbPosition !== null) {  
+          return thumbPosition;
+        }
       }
-      return null;
+    
+      return null;  // If conditions aren't met, return null
     }
   
-    function thumbPos(){
-      let x4, y4, x11, y11;
+    function thumbPos() {
+      let x4 = null, y4 = null;
     
       for (let i = 0; i < hands.length; i++) {
         let hand = hands[i];
@@ -192,19 +213,17 @@ document.addEventListener('DOMContentLoaded', () => {
           let mappedX = p.map(keypoint.x, 0, video.width, 0, p.width);
           let mappedY = p.map(keypoint.y, 0, video.height, 0, p.height);
           let finalX = p.width - mappedX; // Mirror adjustment
-          
-          //index
-          if (j === 4) { 
-            x4 = finalX; 
-            y4 = mappedY;
-          } 
-        }
     
-        // If both keypoints are found, check the distance
-        if (x4, y4) {
-          eraseCheck(x4,y4);
-          return {x4, y4};
+          if (j === 4) { // Thumb tip
+            x4 = finalX;
+            y4 = mappedY;
+          }
         }
+      }
+    
+      if (x4 !== null && y4 !== null) {
+        return { x: x4, y: y4 };  // Use correct object keys
+      } else {
         return null;
       }
     }
@@ -241,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     
-      return false; // Default true if keypoints aren't detected
+      return false;
     }
     function fourFingerClosed(hands, threshold) {
       let x5, y5, x8, y8, x12, y12, x9, y9, x16, y16, x13, y13, x20, y20, x17, y17;
