@@ -120,24 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
         p.scale(-1, 1);
         p.image(video, 0, 0, p.width, p.height);
         p.pop();
-        //console.log(lighter());
-
-        // for (let i = 0; i < hands.length; i++) {
-        //   let hand = hands[i];
-    
-        //   for (let j = 0; j < hand.keypoints.length; j++) {
-        //     let keypoint = hand.keypoints[j];
-    
-        //     // Map keypoints to the canvas
-        //     let mappedX = p.map(keypoint.x, 0, video.width, 0, p.width);
-        //     let mappedY = p.map(keypoint.y, 0, video.height, 0, p.height);
-        //     let finalX = p.width - mappedX; // Flip to match mirrored video
-            
-        //     p.fill(255, 0, 255);
-        //     p.noStroke();
-        //     p.circle(finalX, mappedY, 10);
-        //   }
-        // }
       }
 
       // Update physics engine
@@ -157,31 +139,103 @@ document.addEventListener('DOMContentLoaded', () => {
         p.endShape(p.CLOSE);
       });
       
-      if (lighter() != null) {
-        eraseCheck();
+      if (lighter() !== null) {
+        const thumbPosition = fingerPos(4);
+        if (thumbPosition !== null) {  
+          eraseCheck(thumbPosition.x, thumbPosition.y);
+        } else {
+          console.log("fingerPos(4) returned null");
+        }
+      }
+    
+      if (pinchDetect(50)) {
+        const thumbPosition = fingerPos(4);
+        if (thumbPosition !== null) {  
+          eraseCheck(thumbPosition.x, thumbPosition.y);
+        } else {
+          console.log("fingerPos(4) returned null");
+        }
       }
     }
 
     function eraseCheck(xCheck, yCheck) {
-      console.log({xCheck, yCheck});
-      let bodiesFound = Matter.Query.point(Matter.Composite.allBodies(world), {x: xCheck, y: yCheck});
+      if (xCheck === undefined || yCheck === undefined) {
+        console.log("Erase check skipped: Invalid coordinates");
+        return;
+      }
+    
+      console.log("Erase check at:", { xCheck, yCheck });
+    
+      let bodiesFound = Matter.Query.point(Matter.Composite.allBodies(world), { x: xCheck, y: yCheck });
+    
       if (bodiesFound.length > 0) {
         Matter.World.remove(world, bodiesFound[0]);
-        console.log("erased");
+        console.log("Erased a brick at:", { xCheck, yCheck });
+      } else {
+        console.log("No bricks found to erase.");
       }
     }
 
-    function lighter(){
-      let returnValue = fourFingerClosed(hands, 75);
-      let returnthumbValue = thumbClosed(hands, 75);
-      if(!returnthumbValue && returnValue){
-        return thumbPos(); 
+    //handWireFrame
+    //function handPointCircles(){
+      // for (let i = 0; i < hands.length; i++) {
+        //   let hand = hands[i];
+    
+        //   for (let j = 0; j < hand.keypoints.length; j++) {
+        //     let keypoint = hand.keypoints[j];
+    
+        //     // Map keypoints to the canvas
+        //     let mappedX = p.map(keypoint.x, 0, video.width, 0, p.width);
+        //     let mappedY = p.map(keypoint.y, 0, video.height, 0, p.height);
+        //     let finalX = p.width - mappedX; // Flip to match mirrored video
+            
+        //     p.fill(255, 0, 255);
+        //     p.noStroke();
+        //     p.circle(finalX, mappedY, 10);
+        //   }
+        // }
+    //};
+
+    //Gestures
+    function lighter() {
+      let fingersClosed = fourFingersDown(hands, 75);  
+      let thumbIsClosed = thumbClosed(hands, 75);  
+    
+      if (fingersClosed && !thumbIsClosed) {  
+        const thumbPosition = fingerPos(4);  // Get thumb position
+        if (thumbPosition !== null) {  
+          return thumbPosition;
+        }
       }
-      return null;
+    
+      return null;  
     }
-  
-    function thumbPos(){
-      let x4, y4, x11, y11;
+    let pinchReset = true;  // Ensures user must release before detecting again
+
+    function pinchDetect(threshold) {
+      const thumbPosition = fingerPos(4);  // Thumb tip
+      const indexPosition = fingerPos(8);  // Index tip
+
+      let fingersClosed = threeFingersDown(hands, 100);
+      
+      if (fingersClosed !== null && thumbPosition !== null && indexPosition !== null) {
+        let pinchDistance = p.dist(thumbPosition.x, thumbPosition.y, indexPosition.x, indexPosition.y);
+        console.log("Pinch Distance:", pinchDistance);
+
+        if (pinchDistance <= threshold && pinchReset) {
+          pinchReset = false;  // Prevent repeated erasing
+          return true;
+        }
+        else if(pinchDistance > threshold && !pinchReset){
+          pinchReset = true;  // Reset when fingers are apart
+        }
+      } 
+
+      return false;
+    }
+
+    function fingerPos(fingerIndex) {
+      let x = null, y = null;
     
       for (let i = 0; i < hands.length; i++) {
         let hand = hands[i];
@@ -192,22 +246,17 @@ document.addEventListener('DOMContentLoaded', () => {
           let mappedX = p.map(keypoint.x, 0, video.width, 0, p.width);
           let mappedY = p.map(keypoint.y, 0, video.height, 0, p.height);
           let finalX = p.width - mappedX; // Mirror adjustment
-          
-          //index
-          if (j === 4) { 
-            x4 = finalX; 
-            y4 = mappedY;
-          } 
-        }
     
-        // If both keypoints are found, check the distance
-        if (x4, y4) {
-          eraseCheck(x4,y4);
-          return {x4, y4};
+          if (j === fingerIndex) { // Get the position of the requested finger
+            x = finalX;
+            y = mappedY;
+          }
         }
-        return null;
       }
+    
+      return x !== null && y !== null ? { x, y } : null;
     }
+
     function thumbClosed(hands, threshold) {
       let x4, y4, x11, y11;
     
@@ -221,7 +270,6 @@ document.addEventListener('DOMContentLoaded', () => {
           let mappedY = p.map(keypoint.y, 0, video.height, 0, p.height);
           let finalX = p.width - mappedX; // Mirror adjustment
           
-          //index
           if (j === 4) { 
             x4 = finalX; 
             y4 = mappedY;
@@ -241,9 +289,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     
-      return false; // Default true if keypoints aren't detected
+      return false;
     }
-    function fourFingerClosed(hands, threshold) {
+    function fourFingersDown(hands, threshold) {
       let x5, y5, x8, y8, x12, y12, x9, y9, x16, y16, x13, y13, x20, y20, x17, y17;
     
       for (let i = 0; i < hands.length; i++) {
@@ -302,6 +350,66 @@ document.addEventListener('DOMContentLoaded', () => {
           let pinkyDistance = p.dist(x20, y20, x17, y17);
           //console.log(`Distance between keypoints 5 and 8: ${indexDistance}`);
           if(indexDistance <= threshold &&
+            middleDistance <= threshold &&
+            ringDistance <= threshold &&
+            pinkyDistance <= threshold){
+            return true;
+          }
+        }
+      }
+    
+      return false; // Default true if keypoints aren't detected
+    }
+
+    function threeFingersDown(hands, threshold){
+      let x12, y12, x9, y9, x16, y16, x13, y13, x20, y20, x17, y17;
+    
+      for (let i = 0; i < hands.length; i++) {
+        let hand = hands[i];
+    
+        for (let j = 0; j < hand.keypoints.length; j++) {
+          let keypoint = hand.keypoints[j];
+    
+          let mappedX = p.map(keypoint.x, 0, video.width, 0, p.width);
+          let mappedY = p.map(keypoint.y, 0, video.height, 0, p.height);
+          let finalX = p.width - mappedX; // Mirror adjustment
+          
+          //middle finger
+          if (j === 12) { 
+            x12 = finalX; 
+            y12 = mappedY;
+          } 
+          else if (j === 9) { 
+            x9 = finalX; 
+            y9 = mappedY;
+          }
+          //ring finger
+          else if (j === 16) { 
+            x16 = finalX; 
+            y16 = mappedY;
+          } 
+          else if (j === 13) { 
+            x13 = finalX; 
+            y13 = mappedY;
+          }
+          //pinky finger
+          else if (j === 20) { 
+            x20 = finalX; 
+            y20 = mappedY;
+          } 
+          else if (j === 17) { 
+            x17 = finalX; 
+            y17 = mappedY;
+          }
+        }
+    
+        // If both keypoints are found, check the distance
+        if (x12, y12, x9, y9, x16, y16, x13, y13, x20, y20, x17, y17) {
+          let middleDistance = p.dist(x12, y12, x9, y9);
+          let ringDistance = p.dist(x16, y16, x13, y13);
+          let pinkyDistance = p.dist(x20, y20, x17, y17);
+          //console.log(`Distance between keypoints 5 and 8: ${indexDistance}`);
+          if(
             middleDistance <= threshold &&
             ringDistance <= threshold &&
             pinkyDistance <= threshold){
