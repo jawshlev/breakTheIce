@@ -158,14 +158,26 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       
       if (lighter() != null) {
-        eraseCheck();
+        eraseCheck(lighter(), "lighter");
       }
+      /*if (pinch() != null) {
+        //
+      }*/
     }
 
-    function eraseCheck(xCheck, yCheck) {
+    function eraseCheck({x: xCheck, y: yCheck}, eraseType) {
       console.log({xCheck, yCheck});
       let bodiesFound = Matter.Query.point(Matter.Composite.allBodies(world), {x: xCheck, y: yCheck});
-      if (bodiesFound.length > 0) {
+      if (bodiesFound.length > 0 && eraseType == "lighter") {
+        if (bodiesFound[0].area <= .25) {
+          Matter.World.remove(world, bodiesFound[0]);
+          console.log("erased");
+        }
+        else{
+          Matter.Body.scale(bodiesFound[0], .9, .9)
+        }
+      }
+      if (bodiesFound.length > 0 && eraseType == "pinch") {
         Matter.World.remove(world, bodiesFound[0]);
         console.log("erased");
       }
@@ -202,8 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
         // If both keypoints are found, check the distance
         if (x4, y4) {
-          eraseCheck(x4,y4);
-          return {x4, y4};
+          return {x: x4, y: y4};
         }
         return null;
       }
@@ -324,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mouse interaction
     p.mousePressed = () => {
       if (p.mouseX > 0 && p.mouseY > 0 && p.mouseX < p.width && p.mouseY < p.height) {
-        //mousePressed within window
+        eraseCheck({x: p.mouseX, y: p.mouseY}, "pinch");
       }
     }
     function gotHands(results) {
