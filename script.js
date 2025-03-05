@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
           Matter.Body.scale(bodiesFound[0], .9, .9)
         }
       }
-      if (bodiesFound.length > 0 && eraseType === "pinch") {
+      if (bodiesFound.length > 0 && bodiesFound[0].breakable && eraseType === "pinch") {
         Matter.World.remove(world, bodiesFound[0]);
         console.log("Erased a brick at:", { xCheck, yCheck });
       } else {
@@ -454,7 +454,8 @@ document.addEventListener('DOMContentLoaded', () => {
             {
               restitution: 0.5,
               friction: 0.5,
-              density: 1
+              density: 1,
+              breakable: true
             }
           );
           World.add(world, brick);
@@ -470,7 +471,9 @@ document.addEventListener('DOMContentLoaded', () => {
         p.height,
         p.width,
         wallThickness,
-        { isStatic: true }
+        { isStatic: true,
+          breakable: false
+         }
       );
 
       // Left wall
@@ -479,7 +482,9 @@ document.addEventListener('DOMContentLoaded', () => {
         p.height / 2,
         wallThickness,
         p.height,
-        { isStatic: true }
+        { isStatic: true,
+          breakable: false
+         }
       );
 
       // Right wall
@@ -488,7 +493,9 @@ document.addEventListener('DOMContentLoaded', () => {
         p.height / 2,
         wallThickness,
         p.height,
-        { isStatic: true }
+        { isStatic: true,
+          breakable: false
+         }
       );
 
       // Ceiling (top)
@@ -497,7 +504,9 @@ document.addEventListener('DOMContentLoaded', () => {
         0,
         p.width,
         wallThickness,
-        { isStatic: true }
+        { isStatic: true,
+          breakable: false
+         }
       );
 
       // Add all boundaries to the world
