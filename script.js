@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let handPose;
     let video;
     let hands = [];
-    let pinchReset = true;  // Ensures user must release before detecting again
+      // Ensures user must release before detecting again
     p.preload = () => {
     // Load the handPose model
     console.log("Preloading HandPose model...");
@@ -139,12 +139,14 @@ document.addEventListener('DOMContentLoaded', () => {
         p.endShape(p.CLOSE);
       });
       
-      if (lighter() != null) {
+      if (lighter() !== null) {
         eraseCheck(lighter(), "lighter");
       }
-      if (pinchDetect(50) != null) {
-        console.log(pinchDetect(50));
-        eraseCheck(pinchDetect(50), "pinch");
+      if (pinchDetect(50) !== null) {
+        console.log(pinchDetect());
+        eraseCheck(pinchDetect(), "pinch");
+        console.log(pinchDetect(), "pinch");
+        
       }
     }
 
@@ -162,9 +164,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (bodiesFound.length > 0 && bodiesFound[0].breakable && eraseType === "pinch") {
         Matter.World.remove(world, bodiesFound[0]);
-        console.log("Erased a brick at:", { xCheck, yCheck });
+        //console.log("Erased a brick at:", { xCheck, yCheck });
       } else {
-        console.log("No bricks found to erase.");
+        //console.log("No bricks found to erase.");
       }
     }
 
@@ -203,25 +205,42 @@ document.addEventListener('DOMContentLoaded', () => {
       return null;  
     }
 
-    function pinchDetect(threshold) {
+    let pinchReset = true;
+
+    function pinchDetect() {
+      let threshold = 50;
       const thumbPosition = fingerPos(4);  // Thumb tip
       const indexPosition = fingerPos(8);  // Index tip
 
       let fingersClosed = threeFingersDown(hands, 100);
       
-      if (fingersClosed !== null && thumbPosition !== null && indexPosition !== null) {
+      if (fingersClosed && thumbPosition && indexPosition) {
         let pinchDistance = p.dist(thumbPosition.x, thumbPosition.y, indexPosition.x, indexPosition.y);
         console.log("Pinch Distance:", pinchDistance);
 
-        if (pinchDistance <= threshold && pinchReset) {
-          pinchReset = true;  // Prevent repeated erasing
+        // if (pinchReset) {
+        //   threshold = 50;
+        // }
+        // else{
+        //   threshold = 80;
+        // }
+        // console.log(pinchReset);
+
+        if (pinchDistance <= threshold) {
+          pinchReset = false;  // Prevent repeated erasing
+          console.log("pinch");
+          console.log({x: thumbPosition.x, y: thumbPosition.y});
           return {x: thumbPosition.x, y: thumbPosition.y};
+          
         }
-        else if(pinchDistance > threshold && !pinchReset){
+        else if(pinchDistance > threshold){
+          console.log("unpinch");
+          console.log({x: thumbPosition.x, y: thumbPosition.y});
           pinchReset = true;  // Reset when fingers are apart
         }
-      } 
-      return null;
+      }
+      return {x: 0, y: 0}; 
+      //console.log("zep")
     }
 
     function fingerPos(fingerIndex) {
