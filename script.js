@@ -77,12 +77,28 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize p5.js sketch
   new p5((p) => {
     p5Instance = p;
+    let handPose;
+    let video;
+    let hands = [];
+    let erase;
+    p.preload = () => {
+    // Load the handPose model
+    console.log("Preloading HandPose model...");
+    handPose = ml5.handPose();
+    }
 
     p.setup = () => {
       // Create canvas that fills the container
       const canvasContainer = document.getElementById("canvas-container")
       const canvas = p.createCanvas(canvasContainer.offsetWidth, canvasContainer.offsetHeight)
       canvas.parent("canvas-container")
+      p.background(30)
+      p.frameRate(60)
+      //create video capture
+      video = p.createCapture({ video: { facingMode: "user" }, audio: false });
+      video.size(640, 480);
+      video.hide();
+      handPose.detectStart(video, gotHands);
       
       // Initialize Matter.js engine
       engine = Engine.create();
@@ -97,7 +113,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     p.draw = () => {
       p.background(30);
-      
+      if (video) {
+        // Flip the video horizontally
+        p.push();
+        p.translate(p.width, 0);
+        p.scale(-1, 1);
+        p.image(video, 0, 0, p.width, p.height);
+        p.pop();
+      }
+
       // Update physics engine
       Engine.update(engine);
       
@@ -114,10 +138,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         p.endShape(p.CLOSE);
       });
+      
+      if (lighter() !== null) {
+        const thumbPosition = fingerPos(4);
+        if (thumbPosition !== null) {  
+          eraseCheck(thumbPosition.x, thumbPosition.y);
+        } else {
+          console.log("fingerPos(4) returned null");
+        }
+      }
+    
+      if (pinchDetect(50)) {
+        const thumbPosition = fingerPos(4);
+        if (thumbPosition !== null) {  
+          eraseCheck(thumbPosition.x, thumbPosition.y);
+        } else {
+          console.log("fingerPos(4) returned null");
+        }
+      }
     }
 
-<<<<<<< Updated upstream
-=======
     function eraseCheck(xCheck, yCheck) {
       if (xCheck === undefined || yCheck === undefined) {
         console.log("Erase check skipped: Invalid coordinates");
@@ -128,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
       let bodiesFound = Matter.Query.point(Matter.Composite.allBodies(world), { x: xCheck, y: yCheck });
     
-      if (bodiesFound.length > 0 && bodiesFound[0].breakable) {
+      if (bodiesFound.length > 0) {
         Matter.World.remove(world, bodiesFound[0]);
         console.log("Erased a brick at:", { xCheck, yCheck });
       } else {
@@ -382,12 +422,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   
     
->>>>>>> Stashed changes
     // Handle window resize
     p.windowResize = () => {
       const canvasContainer = document.getElementById("canvas-container")
       p.resizeCanvas(canvasContainer.offsetWidth, canvasContainer.offsetHeight)
       p.background(30)
+    }
+
+    // Mouse interaction
+    p.mousePressed = () => {
+      if (p.mouseX > 0 && p.mouseY > 0 && p.mouseX < p.width && p.mouseY < p.height) {
+        //mousePressed within window
+      }
+    }
+    function gotHands(results) {
+      // save the output to the hands variable
+      hands = results;
     }
 
     function createIceWall() {
@@ -408,8 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
             {
               restitution: 0.5,
               friction: 0.5,
-              density: 1,
-              breakable: true
+              density: 1
             }
           );
           World.add(world, brick);
@@ -425,9 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
         p.height,
         p.width,
         wallThickness,
-        { isStatic: true,
-          breakable: false
-        }
+        { isStatic: true }
       );
 
       // Left wall
@@ -436,9 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
         p.height / 2,
         wallThickness,
         p.height,
-        { isStatic: true,
-          breakable: false
-         }
+        { isStatic: true }
       );
 
       // Right wall
@@ -447,9 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
         p.height / 2,
         wallThickness,
         p.height,
-        { isStatic: true,
-          breakable: false
-         }
+        { isStatic: true }
       );
 
       // Ceiling (top)
@@ -458,9 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
         0,
         p.width,
         wallThickness,
-        { isStatic: true,
-          breakable: false
-         }
+        { isStatic: true }
       );
 
       // Add all boundaries to the world
@@ -469,3 +510,28 @@ document.addEventListener('DOMContentLoaded', () => {
   })
 })
 
+// Play/Pause functionality
+playPauseBtn.addEventListener("click", () => {
+  isPlaying = !isPlaying
+
+  if (isPlaying) {
+    playPauseText.textContent = "Pause"
+    playIcon.classList.add("hidden")
+    pauseIcon.classList.remove("hidden")
+    if (p5Instance && p5Instance.loop) {
+      p5Instance.loop()
+    }
+  } else {
+    playPauseText.textContent = "Play"
+    playIcon.classList.remove("hidden")
+    pauseIcon.classList.add("hidden")
+    if (p5Instance && p5Instance.noLoop) {
+      p5Instance.noLoop()
+    }
+  }
+})
+
+// Reset functionality
+resetBtn.addEventListener("click", () => {
+  window.location.reload()
+})
