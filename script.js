@@ -139,36 +139,27 @@ document.addEventListener('DOMContentLoaded', () => {
         p.endShape(p.CLOSE);
       });
       
-      if (lighter() !== null) {
-        const thumbPosition = fingerPos(4);
-        if (thumbPosition !== null) {  
-          eraseCheck(thumbPosition.x, thumbPosition.y);
-        } else {
-          console.log("fingerPos(4) returned null");
-        }
+      if (lighter() != null) {
+        eraseCheck(lighter(), "lighter");
       }
-    
-      if (pinchDetect(50)) {
-        const thumbPosition = fingerPos(4);
-        if (thumbPosition !== null) {  
-          eraseCheck(thumbPosition.x, thumbPosition.y);
-        } else {
-          console.log("fingerPos(4) returned null");
-        }
-      }
+      /*if (pinch() != null) {
+        //
+      }*/
     }
 
-    function eraseCheck(xCheck, yCheck) {
-      if (xCheck === undefined || yCheck === undefined) {
-        console.log("Erase check skipped: Invalid coordinates");
-        return;
+    function eraseCheck({x: xCheck, y: yCheck}, eraseType) {
+      console.log({xCheck, yCheck});
+      let bodiesFound = Matter.Query.point(Matter.Composite.allBodies(world), {x: xCheck, y: yCheck});
+      if (bodiesFound.length > 0 && eraseType == "lighter") {
+        if (bodiesFound[0].area <= .25) {
+          Matter.World.remove(world, bodiesFound[0]);
+          console.log("erased");
+        }
+        else{
+          Matter.Body.scale(bodiesFound[0], .9, .9)
+        }
       }
-    
-      console.log("Erase check at:", { xCheck, yCheck });
-    
-      let bodiesFound = Matter.Query.point(Matter.Composite.allBodies(world), { x: xCheck, y: yCheck });
-    
-      if (bodiesFound.length > 0) {
+      if (bodiesFound.length > 0 && eraseType == "pinch") {
         Matter.World.remove(world, bodiesFound[0]);
         console.log("Erased a brick at:", { xCheck, yCheck });
       } else {
@@ -247,10 +238,9 @@ document.addEventListener('DOMContentLoaded', () => {
           let mappedY = p.map(keypoint.y, 0, video.height, 0, p.height);
           let finalX = p.width - mappedX; // Mirror adjustment
     
-          if (j === fingerIndex) { // Get the position of the requested finger
-            x = finalX;
-            y = mappedY;
-          }
+        // If both keypoints are found, check the distance
+        if (x4, y4) {
+          return {x: x4, y: y4};
         }
       }
     
@@ -432,7 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mouse interaction
     p.mousePressed = () => {
       if (p.mouseX > 0 && p.mouseY > 0 && p.mouseX < p.width && p.mouseY < p.height) {
-        //mousePressed within window
+        eraseCheck({x: p.mouseX, y: p.mouseY}, "pinch");
       }
     }
     function gotHands(results) {
