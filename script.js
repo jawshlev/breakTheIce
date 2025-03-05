@@ -80,7 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let handPose;
     let video;
     let hands = [];
-    let erase;
     p.preload = () => {
     // Load the handPose model
     console.log("Preloading HandPose model...");
@@ -142,9 +141,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (lighter() != null) {
         eraseCheck(lighter(), "lighter");
       }
-      /*if (pinch() != null) {
-        //
-      }*/
+      if (pinchDetect() != null) {
+        eraseCheck(pinchDetect(50), "pinch")
+      }
     }
 
     function eraseCheck({x: xCheck, y: yCheck}, eraseType) {
@@ -195,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (fingersClosed && !thumbIsClosed) {  
         const thumbPosition = fingerPos(4);  // Get thumb position
         if (thumbPosition !== null) {  
-          return thumbPosition;
+          return {x: thumbPosition.x, y: thumbPosition.y};
         }
       }
     
@@ -215,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (pinchDistance <= threshold && pinchReset) {
           pinchReset = false;  // Prevent repeated erasing
-          return true;
+          return {x: thumbPosition.x, y: thumbPosition.y};
         }
         else if(pinchDistance > threshold && !pinchReset){
           pinchReset = true;  // Reset when fingers are apart
@@ -237,10 +236,16 @@ document.addEventListener('DOMContentLoaded', () => {
           let mappedX = p.map(keypoint.x, 0, video.width, 0, p.width);
           let mappedY = p.map(keypoint.y, 0, video.height, 0, p.height);
           let finalX = p.width - mappedX; // Mirror adjustment
+
+          if (j === fingerIndex) { // Get the position of the requested finger
+            x = finalX;
+            y = mappedY;
+          }
     
         // If both keypoints are found, check the distance
-        if (x4, y4) {
-          return {x: x4, y: y4};
+          if (x, y) {
+            return {x: x, y: y};
+          }
         }
       }
     
@@ -421,10 +426,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Mouse interaction
     p.mousePressed = () => {
-      if (p.mouseX > 0 && p.mouseY > 0 && p.mouseX < p.width && p.mouseY < p.height) {
+      /*if (p.mouseX > 0 && p.mouseY > 0 && p.mouseX < p.width && p.mouseY < p.height) {
         eraseCheck({x: p.mouseX, y: p.mouseY}, "pinch");
-      }
+      }*/
     }
+
     function gotHands(results) {
       // save the output to the hands variable
       hands = results;
