@@ -470,14 +470,14 @@ document.addEventListener('DOMContentLoaded', () => {
       // Adjust wall properties for squares
       const rows = 12;  // Reduced rows since squares are taller
       const bricksPerRow = 14; // Adjusted for better square layout
-      const startX = (p.width - (bricksPerRow * (BRICK_WIDTH + BRICK_GAP))) / 2 + 40
+      const startX = (p.width - (bricksPerRow * (BRICK_WIDTH + BRICK_GAP))) / 2 + 30;
       const startY = p.height - (rows * (BRICK_HEIGHT + BRICK_GAP));
 
       // Create bricks
       for (let row = 0; row < rows; row++) {
         for (let col = 0; col < bricksPerRow; col++) {
           const brick = Bodies.rectangle(
-            startX + col * (BRICK_WIDTH + BRICK_GAP),
+            startX + col * (BRICK_WIDTH + BRICK_GAP) + p.random(0, 10),
             startY + row * (BRICK_HEIGHT + BRICK_GAP),
             BRICK_WIDTH,
             BRICK_HEIGHT,
