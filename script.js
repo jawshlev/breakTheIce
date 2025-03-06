@@ -80,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let handPose;
     let video;
     let hands = [];
+    let bodyNeighbors = [];
       // Ensures user must release before detecting again
     p.preload = () => {
     // Load the handPose model
@@ -167,6 +168,23 @@ document.addEventListener('DOMContentLoaded', () => {
         //console.log("Erased a brick at:", { xCheck, yCheck });
       } else {
         //console.log("No bricks found to erase.");
+      }
+      if (bodiesFound.length > 0 && bodiesFound[0].breakable && eraseType == "fistPump") {
+        bodyNeighbors = [];
+        console.log(BRICK_WIDTH);
+        console.log(BRICK_HEIGHT);
+        for (let col = -BRICK_WIDTH; col <= BRICK_WIDTH; col += BRICK_WIDTH) {
+          console.log("bodyHere");
+          for (let row = -BRICK_HEIGHT; row <= BRICK_HEIGHT; row += BRICK_HEIGHT) {
+            let tempBodies = Matter.Query.point(Matter.Composite.allBodies(world), {x: xCheck+col, y: yCheck+row})
+            if (tempBodies.length > 0) {
+              bodyNeighbors.push(tempBodies[0]);
+              //console.log(bodyNeighbors);
+            }
+          }
+        }
+        console.log("IM YELLING");
+        Matter.World.remove(world, bodyNeighbors);
       }
     }
 
@@ -445,9 +463,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Mouse interaction
     p.mousePressed = () => {
-      /*if (p.mouseX > 0 && p.mouseY > 0 && p.mouseX < p.width && p.mouseY < p.height) {
-        eraseCheck({x: p.mouseX, y: p.mouseY}, "pinch");
-      }*/
+      if (p.mouseX > 0 && p.mouseY > 0 && p.mouseX < p.width && p.mouseY < p.height) {
+        eraseCheck({x: p.mouseX, y: p.mouseY}, "fistPump");
+      }
     }
 
     function gotHands(results) {
