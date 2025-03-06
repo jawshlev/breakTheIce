@@ -70,8 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let world;
 
   // Update these constants at the top
-  const BRICK_WIDTH = 80;  // Now equal to height since we want squares
-  const BRICK_HEIGHT = 80; // Same as width
+  const BRICK_WIDTH = 77;  // Now equal to height since we want squares
+  const BRICK_HEIGHT = 77; // Same as width
   const BRICK_GAP = 2;
 
   // Initialize p5.js sketch
@@ -126,12 +126,24 @@ document.addEventListener('DOMContentLoaded', () => {
       Engine.update(engine);
       
       // Draw all bodies
-      p.fill(135, 206, 235); // Light blue color
-      p.stroke(100, 149, 237); // Darker blue outline
       p.strokeWeight(2); // Outline thickness
       
       const bodies = Matter.Composite.allBodies(world);
       bodies.forEach(body => {
+        if (body.breakable) {
+          // Map breakage (100-0) to color transition (dark blue to light blue)
+          const r = p.map(body.breakage, 0, 100, 135, 37);    // Red component
+          const g = p.map(body.breakage, 0, 100, 206, 119);    // Green component
+          const b = p.map(body.breakage, 0, 100, 235, 173);  // Blue component
+          
+          p.fill(r, g, b);
+          p.stroke(182, 247, 247); // Black outline
+        } else {
+          // Non-breakable bodies (walls) keep original color
+          p.fill(135, 206, 235);
+          p.stroke(100, 149, 237);
+        }
+        
         p.beginShape();
         body.vertices.forEach(vertex => {
           p.vertex(vertex.x, vertex.y);
@@ -153,13 +165,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function eraseCheck({x: xCheck, y: yCheck}, eraseType) {
       console.log({xCheck, yCheck});
       let bodiesFound = Matter.Query.point(Matter.Composite.allBodies(world), {x: xCheck, y: yCheck});
-      if (bodiesFound.length > 0 && eraseType == "lighter") {
-        if (bodiesFound[0].area <= .25) {
-          Matter.World.remove(world, bodiesFound[0]);
-          console.log("erased");
+      if (bodiesFound.length > 0 && eraseType == "lighter" && bodiesFound[0].breakable) {
+        if (bodiesFound[0].breakage > 0){
+          bodiesFound[0].breakage -= 1;
         }
         else{
-          Matter.Body.scale(bodiesFound[0], .9, .9)
+          Matter.World.remove(world, bodiesFound[0]);
         }
       }
       if (bodiesFound.length > 0 && bodiesFound[0].breakable && eraseType === "pinch") {
@@ -457,9 +468,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createIceWall() {
       // Adjust wall properties for squares
-      const rows = 7;  // Reduced rows since squares are taller
-      const bricksPerRow = 12; // Adjusted for better square layout
-      const startX = (p.width - (bricksPerRow * (BRICK_WIDTH + BRICK_GAP))) / 2;
+      const rows = 12;  // Reduced rows since squares are taller
+      const bricksPerRow = 14; // Adjusted for better square layout
+      const startX = (p.width - (bricksPerRow * (BRICK_WIDTH + BRICK_GAP))) / 2 + 40
       const startY = p.height - (rows * (BRICK_HEIGHT + BRICK_GAP));
 
       // Create bricks
@@ -474,7 +485,8 @@ document.addEventListener('DOMContentLoaded', () => {
               restitution: 0.5,
               friction: 0.5,
               density: 1,
-              breakable: true
+              breakable: true,
+              breakage: 100
             }
           );
           World.add(world, brick);
@@ -517,19 +529,19 @@ document.addEventListener('DOMContentLoaded', () => {
          }
       );
 
-      // Ceiling (top)
-      const ceiling = Bodies.rectangle(
-        p.width / 2,
-        0,
-        p.width,
-        wallThickness,
-        { isStatic: true,
-          breakable: false
-         }
-      );
+      // // Ceiling (top)
+      // const ceiling = Bodies.rectangle(
+      //   p.width / 2,
+      //   0,
+      //   p.width,
+      //   wallThickness,
+      //   { isStatic: true,
+      //     breakable: false
+      //    }
+      // );
 
       // Add all boundaries to the world
-      World.add(world, [ground, leftWall, rightWall, ceiling]);
+      World.add(world, [ground, leftWall, rightWall]);
     }
   })
 })
