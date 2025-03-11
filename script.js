@@ -70,8 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let world;
 
   // Update these constants at the top
-  const BRICK_WIDTH = 80;  // Now equal to height since we want squares
-  const BRICK_HEIGHT = 80; // Same as width
+  const BRICK_WIDTH = 77;  // Now equal to height since we want squares
+  const BRICK_HEIGHT = 77; // Same as width
   const BRICK_GAP = 2;
 
   // Initialize p5.js sketch
@@ -82,16 +82,20 @@ document.addEventListener('DOMContentLoaded', () => {
     let hands = [];
     let bodyNeighbors = [];
       // Ensures user must release before detecting again
+    let iceTexture; // Add this to store the texture
+
     p.preload = () => {
-    // Load the handPose model
-    console.log("Preloading HandPose model...");
-    handPose = ml5.handPose();
+      // Load the handPose model
+      console.log("Preloading HandPose model...");
+      handPose = ml5.handPose();
+      // Load the ice texture image
+      iceTexture = p.loadImage('assets/abstract-ice-texture-nature-blue.png');
     }
 
     p.setup = () => {
       // Create canvas that fills the container
       const canvasContainer = document.getElementById("canvas-container")
-      const canvas = p.createCanvas(canvasContainer.offsetWidth, canvasContainer.offsetHeight)
+      const canvas = p.createCanvas(canvasContainer.offsetWidth, canvasContainer.offsetHeight, p.WEBGL);
       canvas.parent("canvas-container")
       p.background(30)
       p.frameRate(60)
@@ -114,30 +118,67 @@ document.addEventListener('DOMContentLoaded', () => {
 
     p.draw = () => {
       p.background(30);
-      if (video) {
-        // Flip the video horizontally
-        p.push();
-        p.translate(p.width, 0);
-        p.scale(-1, 1);
-        p.image(video, 0, 0, p.width, p.height);
-        p.pop();
-      }
-
+      
+      // Translate to center since WEBGL mode uses center as origin
+      p.translate(-p.width/2, -p.height/2);
+      
       // Update physics engine
       Engine.update(engine);
       
-      // Draw all bodies
-      p.fill(135, 206, 235); // Light blue color
-      p.stroke(100, 149, 237); // Darker blue outline
-      p.strokeWeight(2); // Outline thickness
-      
       const bodies = Matter.Composite.allBodies(world);
       bodies.forEach(body => {
-        p.beginShape();
-        body.vertices.forEach(vertex => {
-          p.vertex(vertex.x, vertex.y);
-        });
-        p.endShape(p.CLOSE);
+        if (body.isStatic) {
+          // Walls and boundaries remain solid color
+          p.fill(135, 206, 235);
+          p.stroke(100, 149, 237);
+          p.strokeWeight(2);
+          
+          p.beginShape();
+          body.vertices.forEach(vertex => {
+            p.vertex(vertex.x, vertex.y);
+          });
+          p.endShape(p.CLOSE);
+        } else {
+          // Ice blocks get the texture with cracks
+          p.push();
+          
+          // Draw base texture
+          p.beginShape();
+          p.texture(iceTexture);
+          p.textureMode(p.NORMAL);
+          let vertices = body.vertices;
+          p.vertex(vertices[0].x, vertices[0].y, 0, 0);
+          p.vertex(vertices[1].x, vertices[1].y, 1, 0);
+          p.vertex(vertices[2].x, vertices[2].y, 1, 1);
+          p.vertex(vertices[3].x, vertices[3].y, 0, 1);
+          p.endShape(p.CLOSE);
+
+          // Initialize crack pattern if it doesn't exist
+          if (!body.crackPattern) {
+            body.crackPattern = generateCrackPattern(body.vertices);
+          }
+
+          // Draw cracks based on breakage thresholds
+          if (body.breakage <= 100) {
+            drawCrackPattern(body.crackPattern[0], p, 0.5, body);
+          }
+          if (body.breakage <= 80) {
+            drawCrackPattern(body.crackPattern[1], p, 0.6, body);
+          }
+          if (body.breakage <= 60) {
+            drawCrackPattern(body.crackPattern[2], p, 0.7, body);
+          }
+          if (body.breakage <= 40) {
+            drawCrackPattern(body.crackPattern[3], p, 0.8, body);
+          }
+          if (body.breakage <= 20) {
+            drawCrackPattern(body.crackPattern[4], p, .9, body);
+          }
+          if (body.breakage <= 10) {
+            drawCrackPattern(body.crackPattern[5], p, 1.0, body);
+          } 
+          p.pop();
+        }
       });
       
       if (lighter() !== null) {
@@ -149,18 +190,25 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(pinchDetect(), "pinch");
         
       }
+      // Add mouse position check for debugging
+      if (p.mouseIsPressed && 
+        p.mouseX > 0 && 
+        p.mouseY > 0 && 
+        p.mouseX < p.width && 
+        p.mouseY < p.height) {
+      eraseCheck({x: p.mouseX, y: p.mouseY}, "lighter");
+      }
     }
 
     function eraseCheck({x: xCheck, y: yCheck}, eraseType) {
       console.log({xCheck, yCheck});
       let bodiesFound = Matter.Query.point(Matter.Composite.allBodies(world), {x: xCheck, y: yCheck});
-      if (bodiesFound.length > 0 && eraseType == "lighter") {
-        if (bodiesFound[0].area <= .25) {
-          Matter.World.remove(world, bodiesFound[0]);
-          console.log("erased");
+      if (bodiesFound.length > 0 && eraseType == "lighter" && bodiesFound[0].breakable) {
+        if (bodiesFound[0].breakage > 0){
+          bodiesFound[0].breakage -= 1;
         }
         else{
-          Matter.Body.scale(bodiesFound[0], .9, .9)
+          Matter.World.remove(world, bodiesFound[0]);
         }
       }
       if (bodiesFound.length > 0 && bodiesFound[0].breakable && eraseType === "pinch") {
@@ -475,16 +523,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createIceWall() {
       // Adjust wall properties for squares
-      const rows = 7;  // Reduced rows since squares are taller
-      const bricksPerRow = 12; // Adjusted for better square layout
-      const startX = (p.width - (bricksPerRow * (BRICK_WIDTH + BRICK_GAP))) / 2;
+      const rows = 12;  // Reduced rows since squares are taller
+      const bricksPerRow = 14; // Adjusted for better square layout
+      const startX = (p.width - (bricksPerRow * (BRICK_WIDTH + BRICK_GAP))) / 2 + 30;
       const startY = p.height - (rows * (BRICK_HEIGHT + BRICK_GAP));
 
       // Create bricks
       for (let row = 0; row < rows; row++) {
         for (let col = 0; col < bricksPerRow; col++) {
           const brick = Bodies.rectangle(
-            startX + col * (BRICK_WIDTH + BRICK_GAP),
+            startX + col * (BRICK_WIDTH + BRICK_GAP) + p.random(0, 10),
             startY + row * (BRICK_HEIGHT + BRICK_GAP),
             BRICK_WIDTH,
             BRICK_HEIGHT,
@@ -492,7 +540,8 @@ document.addEventListener('DOMContentLoaded', () => {
               restitution: 0.5,
               friction: 0.5,
               density: 1,
-              breakable: true
+              breakable: true,
+              breakage: 100
             }
           );
           World.add(world, brick);
@@ -535,19 +584,98 @@ document.addEventListener('DOMContentLoaded', () => {
          }
       );
 
-      // Ceiling (top)
-      const ceiling = Bodies.rectangle(
-        p.width / 2,
-        0,
-        p.width,
-        wallThickness,
-        { isStatic: true,
-          breakable: false
-         }
-      );
+      // // Ceiling (top)
+      // const ceiling = Bodies.rectangle(
+      //   p.width / 2,
+      //   0,
+      //   p.width,
+      //   wallThickness,
+      //   { isStatic: true,
+      //     breakable: false
+      //    }
+      // );
 
       // Add all boundaries to the world
-      World.add(world, [ground, leftWall, rightWall, ceiling]);
+      World.add(world, [ground, leftWall, rightWall]);
+    }
+
+    function generateCrackPattern(vertices) {
+      // Generate relative to block size rather than absolute coordinates
+      let patterns = [];
+      
+      for (let i = 0; i < 10; i++) {  // Increased to 10 patterns for each 10-point interval
+        let pattern = [];
+        let numCracks = 2 + i;  // More cracks for each stage
+        
+        for (let j = 0; j < numCracks; j++) {
+          let angle = (j * Math.PI * 2 / numCracks) + (Math.random() * 0.5 - 0.25);
+          let length = 0.3 + (i * 0.05); // Length increases more gradually
+          
+          let crack = {
+            start: { x: 0, y: 0 }, // Center point
+            end: {
+              x: Math.cos(angle) * length,
+              y: Math.sin(angle) * length
+            },
+            branches: []
+          };
+          
+          // Add branches with relative coordinates
+          let numBranches = Math.floor(i/2) + 1; // More gradual increase in branches
+          for (let k = 0; k < numBranches; k++) {
+            let branchStart = {
+              x: Math.cos(angle) * (length * 0.5),
+              y: Math.sin(angle) * (length * 0.5)
+            };
+            let branchAngle = angle + (Math.random() * 0.8 - 0.4);
+            let branchLength = length * 0.4;
+            
+            crack.branches.push({
+              start: branchStart,
+              end: {
+                x: branchStart.x + Math.cos(branchAngle) * branchLength,
+                y: branchStart.y + Math.sin(branchAngle) * branchLength
+              }
+            });
+          }
+          
+          pattern.push(crack);
+        }
+        patterns.push(pattern);
+      }
+      
+      return patterns;
+    }
+
+    function drawCrackPattern(pattern, p, alpha, body) {
+      p.stroke(255, 255, 255, 255 * alpha);
+      p.strokeWeight(1);
+      
+      // Get block center and size
+      let centerX = (body.vertices[0].x + body.vertices[2].x) / 2;
+      let centerY = (body.vertices[0].y + body.vertices[2].y) / 2;
+      let width = BRICK_WIDTH;
+      
+      pattern.forEach(crack => {
+        // Transform relative coordinates to actual position
+        let startX = centerX + crack.start.x * width;
+        let startY = centerY + crack.start.y * width;
+        let endX = centerX + crack.end.x * width;
+        let endY = centerY + crack.end.y * width;
+        
+        // Draw main crack
+        p.line(startX, startY, endX, endY);
+        
+        // Draw branches
+        crack.branches.forEach(branch => {
+          let branchStartX = centerX + branch.start.x * width;
+          let branchStartY = centerY + branch.start.y * width;
+          let branchEndX = centerX + branch.end.x * width;
+          let branchEndY = centerY + branch.end.y * width;
+          
+          p.line(branchStartX, branchStartY, branchEndX, branchEndY);
+        });
+      });
     }
   })
 })
