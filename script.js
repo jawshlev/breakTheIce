@@ -133,58 +133,11 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const bodies = Matter.Composite.allBodies(world);
       bodies.forEach(body => {
-        if (body.isStatic) {
-          // Walls and boundaries remain solid color
-          p.fill(135, 206, 235);
-          p.stroke(100, 149, 237);
-          p.strokeWeight(2);
-          
-          p.beginShape();
-          body.vertices.forEach(vertex => {
-            p.vertex(vertex.x, vertex.y);
-          });
-          p.endShape(p.CLOSE);
-        } else {
-          // Ice blocks get the texture with cracks
-          p.push();
-          
-          // Draw base texture
-          p.beginShape();
-          // p.texture(iceTexture);
-          p.textureMode(p.NORMAL);
-          let vertices = body.vertices;
-          p.vertex(vertices[0].x, vertices[0].y, 0, 0);
-          p.vertex(vertices[1].x, vertices[1].y, 1, 0);
-          p.vertex(vertices[2].x, vertices[2].y, 1, 1);
-          p.vertex(vertices[3].x, vertices[3].y, 0, 1);
-          p.endShape(p.CLOSE);
-
-          // Initialize crack pattern if it doesn't exist
-          if (!body.crackPattern) {
-            body.crackPattern = generateCrackPattern(body.vertices);
-          }
-
-          // Draw cracks based on breakage thresholds
-          if (body.breakage <= 100) {
-            drawCrackPattern(body.crackPattern[0], p, 0.5, body);
-          }
-          if (body.breakage <= 80) {
-            drawCrackPattern(body.crackPattern[1], p, 0.6, body);
-          }
-          if (body.breakage <= 60) {
-            drawCrackPattern(body.crackPattern[2], p, 0.7, body);
-          }
-          if (body.breakage <= 40) {
-            drawCrackPattern(body.crackPattern[3], p, 0.8, body);
-          }
-          if (body.breakage <= 20) {
-            drawCrackPattern(body.crackPattern[4], p, .9, body);
-          }
-          if (body.breakage <= 10) {
-            drawCrackPattern(body.crackPattern[5], p, 1.0, body);
-          } 
-          p.pop();
-        }
+        p.beginShape();
+        body.vertices.forEach(vertex => {
+          p.vertex(vertex.x, vertex.y);
+        });
+        p.endShape(p.CLOSE);
       });
       
       if (lighter() !== null) {
