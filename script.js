@@ -179,7 +179,6 @@ document.addEventListener('DOMContentLoaded', () => {
         //console.log("No bricks found to erase.");
       }
       if (bodiesFound.length > 0 && bodiesFound[0].breakable && eraseType == "fistPump") {
-        bodyNeighbors = [];
         console.log(BRICK_WIDTH);
         console.log(BRICK_HEIGHT);
         for (let col = -BRICK_WIDTH; col <= BRICK_WIDTH; col += BRICK_WIDTH) {
@@ -188,8 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Handles breakage of each block in 5x5 grid
             let tempBodies = Matter.Query.point(Matter.Composite.allBodies(world), {x: xCheck+col, y: yCheck+row})
             if (tempBodies.length > 0) {
-              bodyNeighbors.push(tempBodies[0]);
-              //console.log(bodyNeighbors);
               // Left/Right edges
               if (((col == -BRICK_WIDTH ) || (col == BRICK_WIDTH )) && ((row != -BRICK_HEIGHT ) || (row != BRICK_HEIGHT ))) {
                 if (tempBodies[0].breakage > 20){
@@ -215,8 +212,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
         }
-        console.log("IM YELLING");
-        Matter.World.remove(world, bodyNeighbors);
       }
     }
 
