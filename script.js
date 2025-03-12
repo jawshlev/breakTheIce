@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
           
           // Draw base texture
           p.beginShape();
-          // p.texture(iceTexture);
+          // p.texture(iceTexture); //commented out to remove texture
           p.textureMode(p.NORMAL);
           let vertices = body.vertices;
           p.vertex(vertices[0].x, vertices[0].y, 0, 0);
