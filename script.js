@@ -123,6 +123,15 @@ document.addEventListener('DOMContentLoaded', () => {
         p.pop();
       }
 
+      // Add mouse hold check here
+      if (p.mouseIsPressed && 
+          p.mouseX > 0 && 
+          p.mouseY > 0 && 
+          p.mouseX < p.width && 
+          p.mouseY < p.height) {
+        eraseCheck({x: p.mouseX, y: p.mouseY}, "fistPump");
+      }
+
       // Update physics engine
       Engine.update(engine);
       
@@ -176,10 +185,33 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let col = -BRICK_WIDTH; col <= BRICK_WIDTH; col += BRICK_WIDTH) {
           console.log("bodyHere");
           for (let row = -BRICK_HEIGHT; row <= BRICK_HEIGHT; row += BRICK_HEIGHT) {
+            // Handles breakage of each block in 5x5 grid
             let tempBodies = Matter.Query.point(Matter.Composite.allBodies(world), {x: xCheck+col, y: yCheck+row})
             if (tempBodies.length > 0) {
               bodyNeighbors.push(tempBodies[0]);
               //console.log(bodyNeighbors);
+              // Left/Right edges
+              if (((col == -BRICK_WIDTH ) || (col == BRICK_WIDTH )) && ((row != -BRICK_HEIGHT ) || (row != BRICK_HEIGHT ))) {
+                if (tempBodies[0].breakage > 20){
+                  tempBodies[0].breakage -= 50;
+                }
+                else{
+                  Matter.World.remove(world, tempBodies[0]);
+                }
+              }
+              // Top/bottom edges
+              else if (((col != -BRICK_WIDTH ) || (col != BRICK_WIDTH )) && (row == -BRICK_HEIGHT ) || (row == BRICK_HEIGHT )) {
+                if (tempBodies[0].breakage > 20){
+                  tempBodies[0].breakage -= 50;
+                }
+                else{
+                  Matter.World.remove(world, tempBodies[0]);
+                }
+              }
+              // Center
+              else if (col == 0 && row == 0){
+                Matter.World.remove(world, tempBodies[0]);
+              }
             }
           }
         }
