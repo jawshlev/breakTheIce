@@ -82,6 +82,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let hands = [];
     let bodyNeighbors = [];
       // Ensures user must release before detecting again
+    let iceTexture; // store texture
+
     p.preload = () => {
     // Load the handPose model
     console.log("Preloading HandPose model...");
@@ -142,11 +144,55 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const bodies = Matter.Composite.allBodies(world);
       bodies.forEach(body => {
-        p.beginShape();
-        body.vertices.forEach(vertex => {
-          p.vertex(vertex.x, vertex.y);
-        });
-        p.endShape(p.CLOSE);
+        if (body.isStatic) {
+          // Walls and boundaries remain solid color
+          p.fill(135, 206, 235);
+          p.stroke(100, 149, 237);
+          p.strokeWeight(2);
+          
+          p.beginShape();
+          body.vertices.forEach(vertex => {
+            p.vertex(vertex.x, vertex.y);
+          });
+          p.endShape(p.CLOSE);
+        } else {
+          // Ice blocks get the texture with cracks
+          p.push();
+          
+          // Draw base ice block
+          p.fill(135, 206, 235);
+          p.beginShape();
+          body.vertices.forEach(vertex => {
+            p.vertex(vertex.x, vertex.y);
+          });
+          p.endShape(p.CLOSE);
+
+          // Initialize crack pattern if it doesn't exist
+          if (!body.crackPattern) {
+            body.crackPattern = generateCrackPattern(body.vertices);
+          }
+
+          // Draw cracks based on breakage thresholds
+          if (body.breakage <= 100) {
+            drawCrackPattern(body.crackPattern[0], p, 0.5, body);
+          }
+          if (body.breakage <= 80) {
+            drawCrackPattern(body.crackPattern[1], p, 0.6, body);
+          }
+          if (body.breakage <= 60) {
+            drawCrackPattern(body.crackPattern[2], p, 0.7, body);
+          }
+          if (body.breakage <= 40) {
+            drawCrackPattern(body.crackPattern[3], p, 0.8, body);
+          }
+          if (body.breakage <= 20) {
+            drawCrackPattern(body.crackPattern[4], p, .9, body);
+          }
+          if (body.breakage <= 10) {
+            drawCrackPattern(body.crackPattern[5], p, 1.0, body);
+          } 
+          p.pop();
+        }
       });
       
       if (lighter() !== null) {
@@ -163,13 +209,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function eraseCheck({x: xCheck, y: yCheck}, eraseType) {
       console.log({xCheck, yCheck});
       let bodiesFound = Matter.Query.point(Matter.Composite.allBodies(world), {x: xCheck, y: yCheck});
-      if (bodiesFound.length > 0 && eraseType == "lighter") {
-        if (bodiesFound[0].area <= .25) {
-          Matter.World.remove(world, bodiesFound[0]);
-          console.log("erased");
+      if (bodiesFound.length > 0 && eraseType == "lighter" && bodiesFound[0].breakable) {
+        if (bodiesFound[0].breakage > 0){
+          bodiesFound[0].breakage -= 1;
         }
         else{
-          Matter.Body.scale(bodiesFound[0], .9, .9)
+          Matter.World.remove(world, bodiesFound[0]);
         }
       }
       if (bodiesFound.length > 0 && bodiesFound[0].breakable && eraseType === "pinch") {
@@ -488,13 +533,6 @@ document.addEventListener('DOMContentLoaded', () => {
       p.background(30)
     }
 
-    // Mouse interaction
-    p.mousePressed = () => {
-      if (p.mouseX > 0 && p.mouseY > 0 && p.mouseX < p.width && p.mouseY < p.height) {
-        eraseCheck({x: p.mouseX, y: p.mouseY}, "fistPump");
-      }
-    }
-
     function gotHands(results) {
       // save the output to the hands variable
       hands = results;
@@ -519,7 +557,8 @@ document.addEventListener('DOMContentLoaded', () => {
               restitution: 0.5,
               friction: 0.5,
               density: 1,
-              breakable: true
+              breakable: true,
+              breakage: 100
             }
           );
           World.add(world, brick);
@@ -579,28 +618,108 @@ document.addEventListener('DOMContentLoaded', () => {
   })
 })
 
-// Play/Pause functionality
-playPauseBtn.addEventListener("click", () => {
-  isPlaying = !isPlaying
 
-  if (isPlaying) {
-    playPauseText.textContent = "Pause"
-    playIcon.classList.add("hidden")
-    pauseIcon.classList.remove("hidden")
-    if (p5Instance && p5Instance.loop) {
-      p5Instance.loop()
+function generateCrackPattern(vertices) {
+  // Generate relative to block size rather than absolute coordinates
+  let patterns = [];
+  
+  for (let i = 0; i < 10; i++) {  // Increased to 10 patterns for each 10-point interval
+    let pattern = [];
+    let numCracks = 2 + i;  // More cracks for each stage
+    
+    for (let j = 0; j < numCracks; j++) {
+      let angle = (j * Math.PI * 2 / numCracks) + (Math.random() * 0.5 - 0.25);
+      let length = 0.3 + (i * 0.05); // Length increases more gradually
+      
+      let crack = {
+        start: { x: 0, y: 0 }, // Center point
+        end: {
+          x: Math.cos(angle) * length,
+          y: Math.sin(angle) * length
+        },
+        branches: []
+      };
+      
+      // Add branches with relative coordinates
+      let numBranches = Math.floor(i/2) + 1; // More gradual increase in branches
+      for (let k = 0; k < numBranches; k++) {
+        let branchStart = {
+          x: Math.cos(angle) * (length * 0.5),
+          y: Math.sin(angle) * (length * 0.5)
+        };
+        let branchAngle = angle + (Math.random() * 0.8 - 0.4);
+        let branchLength = length * 0.4;
+        
+        crack.branches.push({
+          start: branchStart,
+          end: {
+            x: branchStart.x + Math.cos(branchAngle) * branchLength,
+            y: branchStart.y + Math.sin(branchAngle) * branchLength
+          }
+        });
+      }
+      
+      pattern.push(crack);
     }
-  } else {
-    playPauseText.textContent = "Play"
-    playIcon.classList.remove("hidden")
-    pauseIcon.classList.add("hidden")
-    if (p5Instance && p5Instance.noLoop) {
-      p5Instance.noLoop()
-    }
+    patterns.push(pattern);
   }
-})
+  
+  return patterns;
+}
 
-// Reset functionality
-resetBtn.addEventListener("click", () => {
-  window.location.reload()
-})
+function drawCrackPattern(pattern, p, alpha, body) {
+  p.stroke(255, 255, 255, 255 * alpha);
+  p.strokeWeight(1);
+  
+  // Get block center and size
+  let centerX = (body.vertices[0].x + body.vertices[2].x) / 2;
+  let centerY = (body.vertices[0].y + body.vertices[2].y) / 2;
+  let width = 80;
+  
+  pattern.forEach(crack => {
+    // Transform relative coordinates to actual position
+    let startX = centerX + crack.start.x * width;
+    let startY = centerY + crack.start.y * width;
+    let endX = centerX + crack.end.x * width;
+    let endY = centerY + crack.end.y * width;
+    
+    // Draw main crack
+    p.line(startX, startY, endX, endY);
+    
+    // Draw branches
+    crack.branches.forEach(branch => {
+      let branchStartX = centerX + branch.start.x * width;
+      let branchStartY = centerY + branch.start.y * width;
+      let branchEndX = centerX + branch.end.x * width;
+      let branchEndY = centerY + branch.end.y * width;
+      
+      p.line(branchStartX, branchStartY, branchEndX, branchEndY);
+    });
+  });
+}
+
+// // Play/Pause functionality
+// playPauseBtn.addEventListener("click", () => {
+//   isPlaying = !isPlaying
+
+//   if (isPlaying) {
+//     playPauseText.textContent = "Pause"
+//     playIcon.classList.add("hidden")
+//     pauseIcon.classList.remove("hidden")
+//     if (p5Instance && p5Instance.loop) {
+//       p5Instance.loop()
+//     }
+//   } else {
+//     playPauseText.textContent = "Play"
+//     playIcon.classList.remove("hidden")
+//     pauseIcon.classList.add("hidden")
+//     if (p5Instance && p5Instance.noLoop) {
+//       p5Instance.noLoop()
+//     }
+//   }
+// })
+
+// // Reset functionality
+// resetBtn.addEventListener("click", () => {
+//   window.location.reload()
+// })
