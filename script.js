@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let handPose;
     let video;
     let hands = [];
-    let iceTexture; // Add this to store the texture
+    let iceTexture; // store texture
 
     p.preload = () => {
       // Load the handPose model
