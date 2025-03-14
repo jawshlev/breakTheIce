@@ -112,13 +112,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Create the brick wall
       createIceWall();
+
+      // Create an offscreen graphics buffer for the mask
+      maskBuffer = p.createGraphics(p.width, p.height);
     }
 
     p.draw = () => {
       p.background(30);
       
+      // Clear the mask buffer at the start of each frame
+      maskBuffer.clear();
+      maskBuffer.background(0); // Black background (masked out)
+      
       // Translate to center since WEBGL mode uses center as origin
       p.translate(-p.width/2, -p.height/2);
+      
+      // Draw the ice texture first
+      p.image(iceTexture, 0, 0, p.width, p.height);
       
       // Update physics engine
       Engine.update(engine);
@@ -137,45 +147,54 @@ document.addEventListener('DOMContentLoaded', () => {
           });
           p.endShape(p.CLOSE);
         } else {
-          // Ice blocks get the texture with cracks
-          p.push();
-          
-          // Draw base texture
-          p.beginShape();
-          // p.texture(iceTexture); //commented out to remove texture
-          p.textureMode(p.NORMAL);
-          let vertices = body.vertices;
-          p.vertex(vertices[0].x, vertices[0].y, 0, 0);
-          p.vertex(vertices[1].x, vertices[1].y, 1, 0);
-          p.vertex(vertices[2].x, vertices[2].y, 1, 1);
-          p.vertex(vertices[3].x, vertices[3].y, 0, 1);
-          p.endShape(p.CLOSE);
+          // For ice blocks, draw white shapes to the mask buffer
+          maskBuffer.fill(255); // White for visible areas
+          maskBuffer.stroke(0); // Black outline
+          maskBuffer.strokeWeight(1); // Thin outline
+          maskBuffer.beginShape();
+          body.vertices.forEach(vertex => {
+            maskBuffer.vertex(vertex.x, vertex.y);
+          });
+          maskBuffer.endShape(p.CLOSE);
+        }
+      });
+      
+      // Apply the mask
+      p.push();
+      p.blendMode(p.MULTIPLY);
+      p.image(maskBuffer, 0, 0);
+      p.pop();
 
-          // Initialize crack pattern if it doesn't exist
+      // Draw cracks on top after masking
+      bodies.forEach(body => {
+        if (!body.isStatic && body.breakable) {
+          // Draw the cracks
           if (!body.crackPattern) {
             body.crackPattern = generateCrackPattern(body.vertices);
           }
 
+          p.stroke(255);
+          p.strokeWeight(1);
+
           // Draw cracks based on breakage thresholds
           if (body.breakage <= 100) {
-            drawCrackPattern(body.crackPattern[0], p, 0.5, body);
+            drawCrackPattern(body.crackPattern[1], p, 0.5, body);
           }
           if (body.breakage <= 80) {
-            drawCrackPattern(body.crackPattern[1], p, 0.6, body);
+            drawCrackPattern(body.crackPattern[2], p, 0.6, body);
           }
           if (body.breakage <= 60) {
-            drawCrackPattern(body.crackPattern[2], p, 0.7, body);
+            drawCrackPattern(body.crackPattern[3], p, 0.7, body);
           }
           if (body.breakage <= 40) {
-            drawCrackPattern(body.crackPattern[3], p, 0.8, body);
+            drawCrackPattern(body.crackPattern[4], p, 0.8, body);
           }
           if (body.breakage <= 20) {
-            drawCrackPattern(body.crackPattern[4], p, .9, body);
+            drawCrackPattern(body.crackPattern[5], p, 0.9, body);
           }
           if (body.breakage <= 10) {
-            drawCrackPattern(body.crackPattern[5], p, 1.0, body);
-          } 
-          p.pop();
+            drawCrackPattern(body.crackPattern[6], p, 1.0, body);
+          }
         }
       });
       
@@ -628,33 +647,29 @@ document.addEventListener('DOMContentLoaded', () => {
       return patterns;
     }
 
-    function drawCrackPattern(pattern, p, alpha, body) {
-      p.stroke(255, 255, 255, 255 * alpha);
-      p.strokeWeight(1);
+    function drawCrackPattern(pattern, buffer, alpha, body) {
+      buffer.stroke(255, 255, 255, 255 * alpha);
+      buffer.strokeWeight(1);
       
-      // Get block center and size
       let centerX = (body.vertices[0].x + body.vertices[2].x) / 2;
       let centerY = (body.vertices[0].y + body.vertices[2].y) / 2;
       let width = BRICK_WIDTH;
       
       pattern.forEach(crack => {
-        // Transform relative coordinates to actual position
         let startX = centerX + crack.start.x * width;
         let startY = centerY + crack.start.y * width;
         let endX = centerX + crack.end.x * width;
         let endY = centerY + crack.end.y * width;
         
-        // Draw main crack
-        p.line(startX, startY, endX, endY);
+        buffer.line(startX, startY, endX, endY);
         
-        // Draw branches
         crack.branches.forEach(branch => {
           let branchStartX = centerX + branch.start.x * width;
           let branchStartY = centerY + branch.start.y * width;
           let branchEndX = centerX + branch.end.x * width;
           let branchEndY = centerY + branch.end.y * width;
           
-          p.line(branchStartX, branchStartY, branchEndX, branchEndY);
+          buffer.line(branchStartX, branchStartY, branchEndX, branchEndY);
         });
       });
     }
