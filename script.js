@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let shiftedFistEllipse = null;
   let waitingForInitialHit = false;
   let fistDetectedFrames = 0;
-  const detectionThreshold = 10;
+  const detectionThreshold = 5;
 
 
   // Initialize p5.js sketch
@@ -293,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (pinchDetect(50) !== null) {
         //console.log(pinchDetect());
-        eraseCheck(pinchDetect(), "pinch");
+        //eraseCheck(pinchDetect(), "pinch");
         //console.log(pinchDetect(), "pinch");
         
       }
