@@ -74,9 +74,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const BRICK_HEIGHT = 80; // Same as width
   const BRICK_GAP = 2;
 
+<<<<<<< Updated upstream
   // At the top with other variables
   let iceTexture;
   let maskBuffer;
+=======
+  //fistPump Elements
+  let fistEllipse = null;
+  let shiftedFistEllipse = null;
+  let waitingForInitialHit = false;
+  let fistDetectedFrames = 0;
+  const detectionThreshold = 10;
+>>>>>>> Stashed changes
 
   // Initialize p5.js sketch
   new p5((p) => {
@@ -169,6 +178,48 @@ document.addEventListener('DOMContentLoaded', () => {
       p.stroke(100, 149, 237); // Darker blue outline
       p.strokeWeight(2); // Outline thickness
       
+      if (fistMade()) {
+        const middleKnucklePos = fingerPos(9);
+        if (middleKnucklePos && !fistEllipse) {
+          fistEllipse = { x: middleKnucklePos.x, y: middleKnucklePos.y };
+          shiftedFistEllipse = { x: middleKnucklePos.x, y: Math.max(middleKnucklePos.y - 250, 0) };
+          waitingForInitialHit = false; // Reset loop state
+        }
+      }
+
+      if (fistMade()) {
+        fistDetectedFrames++;
+        if (fistDetectedFrames >= detectionThreshold) {
+          const middleKnucklePos = fingerPos(9);
+          if (middleKnucklePos && !fistEllipse) {
+            fistEllipse = { x: middleKnucklePos.x, y: middleKnucklePos.y };
+            shiftedFistEllipse = { x: middleKnucklePos.x, y: Math.max(middleKnucklePos.y - 250, 0) };
+            waitingForInitialHit = false;
+          }
+        }
+      } else {
+        fistDetectedFrames = 0;
+        fistEllipse = null;
+        shiftedFistEllipse = null;
+      }
+
+      if (fistEllipse) {
+        p.fill(255, 0, 0);
+        p.ellipse(fistEllipse.x, fistEllipse.y, 100, 100);
+      }
+      if (shiftedFistEllipse) {
+        p.fill(0, 255, 0);
+        p.ellipse(shiftedFistEllipse.x, shiftedFistEllipse.y, 100, 100);
+      }
+
+      if (!waitingForInitialHit && shiftedFistEllipse && checkFistCollision(shiftedFistEllipse)) {
+        waitingForInitialHit = true;
+        shiftedFistEllipse = null;
+      } else if (waitingForInitialHit && fistEllipse && checkFistCollision(fistEllipse)) {
+        waitingForInitialHit = false;
+        shiftedFistEllipse = { x: fistEllipse.x, y: Math.max(fistEllipse.y - 250, 0) };
+      }
+
       const bodies = Matter.Composite.allBodies(world);
       bodies.forEach(body => {
         if (body.isStatic) {
@@ -238,15 +289,21 @@ document.addEventListener('DOMContentLoaded', () => {
         eraseCheck(lighter(), "lighter");
       }
       if (pinchDetect(50) !== null) {
-        console.log(pinchDetect());
+        //console.log(pinchDetect());
         eraseCheck(pinchDetect(), "pinch");
-        console.log(pinchDetect(), "pinch");
+        //console.log(pinchDetect(), "pinch");
         
       }
     }
 
+    function checkFistCollision(ellipsePos) {
+      const middleKnucklePos = fingerPos(9);
+      if (!middleKnucklePos) return false;
+      return p.dist(middleKnucklePos.x, middleKnucklePos.y, ellipsePos.x, ellipsePos.y) < 50;
+    }
+    
     function eraseCheck({x: xCheck, y: yCheck}, eraseType) {
-      console.log({xCheck, yCheck});
+      //console.log({xCheck, yCheck});
       let bodiesFound = Matter.Query.point(Matter.Composite.allBodies(world), {x: xCheck, y: yCheck});
       if (bodiesFound.length > 0 && eraseType == "lighter" && bodiesFound[0].breakable) {
         if (bodiesFound[0].breakage > 0){
@@ -345,7 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       if (fingersClosed && thumbPosition && indexPosition) {
         let pinchDistance = p.dist(thumbPosition.x, thumbPosition.y, indexPosition.x, indexPosition.y);
-        console.log("Pinch Distance:", pinchDistance);
+        //console.log("Pinch Distance:", pinchDistance);
 
         // if (pinchReset) {
         //   threshold = 50;
@@ -357,19 +414,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (pinchDistance <= threshold) {
           pinchReset = false;  // Prevent repeated erasing
-          console.log("pinch");
-          console.log({x: thumbPosition.x, y: thumbPosition.y});
+          //console.log("pinch");
+          //console.log({x: thumbPosition.x, y: thumbPosition.y});
           return {x: thumbPosition.x, y: thumbPosition.y};
           
         }
         else if(pinchDistance > threshold){
-          console.log("unpinch");
-          console.log({x: thumbPosition.x, y: thumbPosition.y});
+          //console.log("unpinch");
+          //console.log({x: thumbPosition.x, y: thumbPosition.y});
           pinchReset = true;  // Reset when fingers are apart
         }
       }
       return {x: 0, y: 0}; 
       //console.log("zep")
+    }
+    function checkFistCollision(ellipsePos) {
+      const middleKnucklePos = fingerPos(9);
+      if (!middleKnucklePos) return false;
+      let d = p.dist(middleKnucklePos.x, middleKnucklePos.y, ellipsePos.x, ellipsePos.y);
+      return d < 50; // Collision detected if within radius
+    }
+
+    function fistMade() {
+      return fourFingersDown(hands, 80) && thumbClosed(hands, 80);
     }
 
     function fingerPos(fingerIndex) {
