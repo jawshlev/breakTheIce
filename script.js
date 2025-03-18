@@ -74,18 +74,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const BRICK_HEIGHT = 80; // Same as width
   const BRICK_GAP = 2;
 
-<<<<<<< Updated upstream
   // At the top with other variables
   let iceTexture;
   let maskBuffer;
-=======
+
   //fistPump Elements
   let fistEllipse = null;
   let shiftedFistEllipse = null;
   let waitingForInitialHit = false;
   let fistDetectedFrames = 0;
   const detectionThreshold = 10;
->>>>>>> Stashed changes
+
 
   // Initialize p5.js sketch
   new p5((p) => {
