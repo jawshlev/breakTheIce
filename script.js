@@ -203,12 +203,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (fistEllipse) {
-        p.fill(255, 0, 0);
+        p.push();
+        p.fill(255, 0, 0, 150); // Red with transparency
         p.ellipse(fistEllipse.x, fistEllipse.y, 100, 100);
+        p.pop();
       }
       if (shiftedFistEllipse) {
-        p.fill(0, 255, 0);
+        p.push();
+        p.fill(0, 255, 0, 150); // Green with transparency
         p.ellipse(shiftedFistEllipse.x, shiftedFistEllipse.y, 100, 100);
+        p.pop();
       }
 
       if (!waitingForInitialHit && shiftedFistEllipse && checkFistCollision(shiftedFistEllipse)) {
@@ -295,11 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    function checkFistCollision(ellipsePos) {
-      const middleKnucklePos = fingerPos(9);
-      if (!middleKnucklePos) return false;
-      return p.dist(middleKnucklePos.x, middleKnucklePos.y, ellipsePos.x, ellipsePos.y) < 50;
-    }
+    
     
     function eraseCheck({x: xCheck, y: yCheck}, eraseType) {
       //console.log({xCheck, yCheck});
@@ -376,6 +376,13 @@ document.addEventListener('DOMContentLoaded', () => {
     //};
 
     //Gestures
+
+    function checkFistCollision(ellipsePos) {
+      const middleKnucklePos = fingerPos(9);
+      if (!middleKnucklePos) return false;
+      return p.dist(middleKnucklePos.x, middleKnucklePos.y, ellipsePos.x, ellipsePos.y) < 50;
+    }
+
     function lighter() {
       let fingersClosed = fourFingersDown(hands, 75);  
       let thumbIsClosed = thumbClosed(hands, 75);  
@@ -393,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let pinchReset = true;
 
     function pinchDetect() {
-      let threshold = 50;
+      let threshold = 30;
       const thumbPosition = fingerPos(4);  // Thumb tip
       const indexPosition = fingerPos(8);  // Index tip
 
@@ -435,7 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function fistMade() {
-      return fourFingersDown(hands, 80) && thumbClosed(hands, 80);
+      return fourFingersDown(hands, 50) && thumbClosed(hands, 50);
     }
 
     function fingerPos(fingerIndex) {
