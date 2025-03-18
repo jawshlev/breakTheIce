@@ -70,8 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let world;
 
   // Update these constants at the top
-  const BRICK_WIDTH = 80;  // Now equal to height since we want squares
-  const BRICK_HEIGHT = 80; // Same as width
+  const BRICK_WIDTH = 90;  // Now equal to height since we want squares
+  const BRICK_HEIGHT = 90; // Same as width
   const BRICK_GAP = 2;
 
   // At the top with other variables
@@ -652,7 +652,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createIceWall() {
       // Adjust wall properties for squares
-      const rows = 7;  // Reduced rows since squares are taller
+      const rows = 11;  // Reduced rows since squares are taller
       const bricksPerRow = 12; // Adjusted for better square layout
       const startX = (p.width - (bricksPerRow * (BRICK_WIDTH + BRICK_GAP))) / 2;
       const startY = p.height - (rows * (BRICK_HEIGHT + BRICK_GAP));
@@ -661,7 +661,7 @@ document.addEventListener('DOMContentLoaded', () => {
       for (let row = 0; row < rows; row++) {
         for (let col = 0; col < bricksPerRow; col++) {
           const brick = Bodies.rectangle(
-            startX + col * (BRICK_WIDTH + BRICK_GAP),
+            startX + col * (BRICK_WIDTH + BRICK_GAP) + p.random(-5, 5) + 45,
             startY + row * (BRICK_HEIGHT + BRICK_GAP),
             BRICK_WIDTH,
             BRICK_HEIGHT,
@@ -861,7 +861,7 @@ function drawCrackPattern(pattern, p, alpha, body) {
   // Get block center and size
   let centerX = (body.vertices[0].x + body.vertices[2].x) / 2;
   let centerY = (body.vertices[0].y + body.vertices[2].y) / 2;
-  let width = 80;
+  let width = 90;
   
   pattern.forEach(crack => {
     // Transform relative coordinates to actual position
