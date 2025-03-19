@@ -83,8 +83,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let shiftedFistEllipse = null;
   let waitingForInitialHit = false;
   let fistDetectedFrames = 0;
-  const detectionThreshold = 5;
+  let fistLostFrames = 0;
+  const detectionThreshold = 10;
+  const lossThreshold = 15;
 
+  //gif
+  var gifImage;
 
   // Initialize p5.js sketch
   new p5((p) => {
@@ -105,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
         () => console.log('Ice texture loaded successfully'),
         (err) => console.error('Failed to load ice texture:', err)
       );
+      gifImage = p.loadImage("https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExYzhkMjNscnpnajJxMmNyc3RkbzgzYWZ1MHE4azlhbGpqNXVkbTNrNyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/f7H1pKwP9sShX5pW6R/giphy.gif");
     }
 
     p.setup = () => {
@@ -136,6 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     p.draw = () => {
       p.background(30);
+
       
       // Check if texture is loaded before using it
       if (!iceTexture || !iceTexture.width) {
@@ -164,7 +170,11 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Clear the mask buffer at the start of each frame
       maskBuffer.clear();
-      maskBuffer.background(0); // Black background (masked out)
+      if (gifImage) {
+        maskBuffer.image(gifImage, 0, 0, maskBuffer.width-25, maskBuffer.height-25);
+      } else {
+        maskBuffer.background(0); // Fallback black background
+      } // Black background (masked out)
       
       // Draw the ice texture first
       p.image(iceTexture, 0, 0, p.width, p.height);
@@ -177,17 +187,22 @@ document.addEventListener('DOMContentLoaded', () => {
       p.stroke(100, 149, 237); // Darker blue outline
       p.strokeWeight(2); // Outline thickness
       
-      if (fistMade()) {
-        const middleKnucklePos = fingerPos(9);
-        if (middleKnucklePos && !fistEllipse) {
-          fistEllipse = { x: middleKnucklePos.x, y: middleKnucklePos.y };
-          shiftedFistEllipse = { x: middleKnucklePos.x, y: Math.max(middleKnucklePos.y - 250, 0) };
-          waitingForInitialHit = false; // Reset loop state
-        }
-      }
+      // if (fistEllipse) {
+      //   p.push();
+      //   p.fill(255, 0, 0, 150); // Red with transparency
+      //   p.ellipse(fistEllipse.x, fistEllipse.y, 400, 50);
+      //   p.pop();
+      // }
+      // if (shiftedFistEllipse) {
+      //   p.push();
+      //   p.fill(0, 255, 0, 150); // Green with transparency
+      //   p.ellipse(shiftedFistEllipse.x, shiftedFistEllipse.y, 400, 50);
+      //   p.pop();
+      // }
 
       if (fistMade()) {
         fistDetectedFrames++;
+        fistLostFrames = 0;
         if (fistDetectedFrames >= detectionThreshold) {
           const middleKnucklePos = fingerPos(9);
           if (middleKnucklePos && !fistEllipse) {
@@ -197,30 +212,27 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
       } else {
-        fistDetectedFrames = 0;
-        fistEllipse = null;
-        shiftedFistEllipse = null;
-      }
-
-      if (fistEllipse) {
-        p.push();
-        p.fill(255, 0, 0, 150); // Red with transparency
-        p.ellipse(fistEllipse.x, fistEllipse.y, 100, 100);
-        p.pop();
-      }
-      if (shiftedFistEllipse) {
-        p.push();
-        p.fill(0, 255, 0, 150); // Green with transparency
-        p.ellipse(shiftedFistEllipse.x, shiftedFistEllipse.y, 100, 100);
-        p.pop();
+        if (fistEllipse) {
+          fistLostFrames++;
+          if (fistLostFrames > lossThreshold) {
+            fistEllipse = null;
+            shiftedFistEllipse = null;
+            fistDetectedFrames = 0;
+          }
+        } else {
+          fistDetectedFrames = 0;
+          fistLostFrames = 0;
+        }
       }
 
       if (!waitingForInitialHit && shiftedFistEllipse && checkFistCollision(shiftedFistEllipse)) {
         waitingForInitialHit = true;
         shiftedFistEllipse = null;
+        console.log("Fist pump detected!");
       } else if (waitingForInitialHit && fistEllipse && checkFistCollision(fistEllipse)) {
         waitingForInitialHit = false;
         shiftedFistEllipse = { x: fistEllipse.x, y: Math.max(fistEllipse.y - 250, 0) };
+        console.log("Fist reset!");
       }
 
       const bodies = Matter.Composite.allBodies(world);
@@ -291,12 +303,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (lighter() !== null) {
         eraseCheck(lighter(), "lighter");
       }
-      if (pinchDetect(50) !== null) {
+      if (pinchDetect(100) !== null) {
         //console.log(pinchDetect());
-        //eraseCheck(pinchDetect(), "pinch");
-        //console.log(pinchDetect(), "pinch");
-        
+        eraseCheck(pinchDetect(), "pinch");
+        // console.log(pinchDetect(), "pinch");
       }
+      handPointCircles()
     }
 
     
@@ -356,32 +368,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     //handWireFrame
-    //function handPointCircles(){
-      // for (let i = 0; i < hands.length; i++) {
-        //   let hand = hands[i];
+    function handPointCircles(){
+      for (let i = 0; i < hands.length; i++) {
+          let hand = hands[i];
     
-        //   for (let j = 0; j < hand.keypoints.length; j++) {
-        //     let keypoint = hand.keypoints[j];
+          for (let j = 0; j < hand.keypoints.length; j++) {
+            let keypoint = hand.keypoints[j];
     
-        //     // Map keypoints to the canvas
-        //     let mappedX = p.map(keypoint.x, 0, video.width, 0, p.width);
-        //     let mappedY = p.map(keypoint.y, 0, video.height, 0, p.height);
-        //     let finalX = p.width - mappedX; // Flip to match mirrored video
+            // Map keypoints to the canvas
+            let mappedX = p.map(keypoint.x, 0, video.width, 0, p.width);
+            let mappedY = p.map(keypoint.y, 0, video.height, 0, p.height);
+            let finalX = p.width - mappedX; // Flip to match mirrored video
             
-        //     p.fill(255, 0, 255);
-        //     p.noStroke();
-        //     p.circle(finalX, mappedY, 10);
-        //   }
-        // }
-    //};
+            p.fill(255, 0, 255);
+            p.noStroke();
+            p.circle(finalX, mappedY, 10);
+          }
+        }
+    };
 
     //Gestures
-
-    function checkFistCollision(ellipsePos) {
-      const middleKnucklePos = fingerPos(9);
-      if (!middleKnucklePos) return false;
-      return p.dist(middleKnucklePos.x, middleKnucklePos.y, ellipsePos.x, ellipsePos.y) < 50;
-    }
 
     function lighter() {
       let fingersClosed = fourFingersDown(hands, 75);  
@@ -405,8 +411,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const indexPosition = fingerPos(8);  // Index tip
 
       let fingersClosed = threeFingersDown(hands, 100);
+      let indexDown = fourFingersDown(hands, 100);
       
-      if (fingersClosed && thumbPosition && indexPosition) {
+      if (fingersClosed && thumbPosition && indexPosition && !indexDown) {
         let pinchDistance = p.dist(thumbPosition.x, thumbPosition.y, indexPosition.x, indexPosition.y);
         //console.log("Pinch Distance:", pinchDistance);
 
@@ -437,8 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function checkFistCollision(ellipsePos) {
       const middleKnucklePos = fingerPos(9);
       if (!middleKnucklePos) return false;
-      let d = p.dist(middleKnucklePos.x, middleKnucklePos.y, ellipsePos.x, ellipsePos.y);
-      return d < 50; // Collision detected if within radius
+      return Math.abs(middleKnucklePos.y - ellipsePos.y) < 50;
     }
 
     function fistMade() {
