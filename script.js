@@ -316,21 +316,21 @@ document.addEventListener('DOMContentLoaded', () => {
         //console.log("No bricks found to erase.");
       }
       //  Remove length+break checks for final punch if single instance given
-      if (bodiesFound.length > 0 && bodiesFound[0].breakable && eraseType == "fistPump") {
+      if (eraseType == "fistPump") {
         console.log(BRICK_WIDTH);
         console.log(BRICK_HEIGHT);
-        for (let col = -3*BRICK_WIDTH; col <= 3*BRICK_WIDTH; col += BRICK_WIDTH) {
+        for (let col = -4*BRICK_WIDTH; col <= 4*BRICK_WIDTH; col += BRICK_WIDTH) {
           console.log("bodyHere");
-          for (let row = -3*BRICK_HEIGHT; row <= 3*BRICK_HEIGHT; row += BRICK_HEIGHT) {
+          for (let row = -4*BRICK_HEIGHT; row <= 4*BRICK_HEIGHT; row += BRICK_HEIGHT) {
             // Handles breakage of each block in 5x5 grid
             let tempBodies = Matter.Query.point(Matter.Composite.allBodies(world), {x: p.width/2 + col, y: p.height/2 + row}) //{x: xCheck+col, y: yCheck+row})
             if (tempBodies.length > 0) {
               // Left/Right edges
-              if (((col == -3*BRICK_WIDTH ) || (col == 3*BRICK_WIDTH )) && row == 0 && tempBodies[0].breakable) {
+              if (((col == -4*BRICK_WIDTH ) || (col == 4*BRICK_WIDTH )) && row == 0 && tempBodies[0].breakable) {
                 breaker(tempBodies[0], 25);
               }
               //  Second col + mirror
-              else if (((col == -2*BRICK_WIDTH ) || (col == 2*BRICK_WIDTH )) && tempBodies[0].breakable) {
+              else if (((col == -3*BRICK_WIDTH ) || (col == 3*BRICK_WIDTH )) && tempBodies[0].breakable) {
                 if ((row == -BRICK_HEIGHT ) || (row == BRICK_HEIGHT )) {
                   breaker(tempBodies[0], 25);
                 }
@@ -339,7 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
               }
               //  Third col + mirror
-              else if (((col == -BRICK_WIDTH ) || (col == BRICK_WIDTH )) && tempBodies[0].breakable) {
+              else if (((col == -2*BRICK_WIDTH ) || (col == 2*BRICK_WIDTH )) && tempBodies[0].breakable) {
                 if ((row == -2*BRICK_HEIGHT ) || (row == 2*BRICK_HEIGHT )) {
                   breaker(tempBodies[0], 25);
                 }
@@ -350,8 +350,8 @@ document.addEventListener('DOMContentLoaded', () => {
                   breaker(tempBodies[0], 75);
                 }
               }
-              // Center col
-              else if (col == 0 && tempBodies[0].breakable) {
+              // Fourth col + mirror
+              else if (((col == -BRICK_WIDTH ) || (col == BRICK_WIDTH )) && tempBodies[0].breakable) {
                 if ((row == -3*BRICK_HEIGHT ) || (row == 3*BRICK_HEIGHT )) {
                   breaker(tempBodies[0], 25);
                 }
@@ -362,6 +362,21 @@ document.addEventListener('DOMContentLoaded', () => {
                   breaker(tempBodies[0], 75);
                 }
                 else if (row == 0) {
+                  Matter.World.remove(world, tempBodies[0]);
+                }
+              }
+              // Center col
+              else if (col == 0 && tempBodies[0].breakable) {
+                if ((row == -4*BRICK_HEIGHT ) || (row == 4*BRICK_HEIGHT )) {
+                  breaker(tempBodies[0], 25);
+                }
+                else if ((row == -3*BRICK_HEIGHT ) || (row == 3*BRICK_HEIGHT )) {
+                  breaker(tempBodies[0], 50);
+                }
+                else if ((row == -2*BRICK_HEIGHT ) || (row == 2*BRICK_HEIGHT )) {
+                  breaker(tempBodies[0], 75);
+                }
+                else if ((row == -BRICK_HEIGHT ) || (row == BRICK_HEIGHT ) || (row == 0)) {
                   Matter.World.remove(world, tempBodies[0]);
                 }
               }
