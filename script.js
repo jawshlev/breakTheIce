@@ -93,6 +93,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let breakSound;
   let crackSound;
 
+  // Add these with other state variables at the top
+  let brokenBlockCount = 0;
+  let blocksBrokenToWin = 100;
+  let totalBrokenBlocks = 0;
+  const BLOCKS_TO_SPAWN = 15;
+
   // Initialize p5.js sketch
   new p5((p) => {
     p5Instance = p;
@@ -345,9 +351,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function eraseCheck({x: xCheck, y: yCheck}, eraseType) {
       let bodiesFound = Matter.Query.point(Matter.Composite.allBodies(world), {x: xCheck, y: yCheck});
-      if (bodiesFound.length > 0 && eraseType == "lighter" && bodiesFound[0].breakable) {
-        breaker(bodiesFound[0], 1);
-      }
       
       if (bodiesFound.length > 0 && eraseType == "lighter" && bodiesFound[0].breakable) {
         if (bodiesFound[0].breakage > 0) {
@@ -356,13 +359,16 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           Matter.World.remove(world, bodiesFound[0]);
           breakSound.play();
+          checkBlockCount();
         }
       }
       
       if (bodiesFound.length > 0 && bodiesFound[0].breakable && eraseType === "pinch") {
         Matter.World.remove(world, bodiesFound[0]);
         breakSound.play();
+        checkBlockCount();
       }
+      
       //  Remove length+break checks for final punch if single instance given
       if (eraseType == "fistPump") {
         console.log(BRICK_WIDTH);
@@ -411,6 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 else if (row == 0) {
                   Matter.World.remove(world, tempBodies[0]);
+                  checkBlockCount();
                 }
               }
               // Center col
@@ -426,6 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 else if ((row == -BRICK_HEIGHT ) || (row == BRICK_HEIGHT ) || (row == 0)) {
                   Matter.World.remove(world, tempBodies[0]);
+                  checkBlockCount();
                 }
               }
             }
@@ -441,6 +449,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       else{
         Matter.World.remove(world, iceCube);
+        checkBlockCount();
         breakSound.play();
       }
     }
@@ -886,6 +895,41 @@ document.addEventListener('DOMContentLoaded', () => {
           buffer.line(branchStartX, branchStartY, branchEndX, branchEndY);
         });
       });
+    }
+
+    // Add this function to create a new row
+    function spawnNewRow() {
+      const bricksPerRow = 12; // Match your existing wall width
+      const startX = (p.width - (bricksPerRow * (BRICK_WIDTH + BRICK_GAP))) / 2;
+      
+      for (let col = 0; col < bricksPerRow; col++) {
+        const brick = Bodies.rectangle(
+          startX + col * (BRICK_WIDTH + BRICK_GAP) + p.random(-5, 5) + 45,
+          0, // At the top of the screen
+          BRICK_WIDTH,
+          BRICK_HEIGHT,
+          {
+            restitution: 0.5,
+            friction: 0.5,
+            density: 1,
+            breakable: true,
+            breakage: 100,
+            crackLevel: 0
+          }
+        );
+        World.add(world, brick);
+      }
+    }
+
+    // Add this function to check block count and spawn new row
+    function checkBlockCount() {
+      brokenBlockCount++;
+      totalBrokenBlocks++;
+      if (brokenBlockCount >= BLOCKS_TO_SPAWN && totalBrokenBlocks < blocksBrokenToWin) {
+        spawnNewRow();
+        brokenBlockCount = 0;
+        console.log("totalBrokenBlocks: " + totalBrokenBlocks);
+      }
     }
   })
 })
