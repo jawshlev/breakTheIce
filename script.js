@@ -87,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Add this with other state variables at the top
   let breakSound;
+  let crackSound;
 
   // Initialize p5.js sketch
   new p5((p) => {
@@ -110,10 +111,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     p.setup = () => {
-      // Add this at the start of setup
+      // Add this with your other sound load
       breakSound = p.loadSound('assets/breaksound.mp3', 
-        () => console.log('Sound loaded successfully'),
-        (err) => console.error('Failed to load sound:', err)
+        () => console.log('Break sound loaded successfully'),
+        (err) => console.error('Failed to load break sound:', err)
+      );
+      
+      crackSound = p.loadSound('assets/crack.mp3',
+        () => console.log('Crack sound loaded successfully'),
+        (err) => console.error('Failed to load crack sound:', err)
       );
 
       // Create canvas that fills the container
@@ -309,57 +315,63 @@ document.addEventListener('DOMContentLoaded', () => {
     
     
     function eraseCheck({x: xCheck, y: yCheck}, eraseType) {
-      //console.log({xCheck, yCheck});
       let bodiesFound = Matter.Query.point(Matter.Composite.allBodies(world), {x: xCheck, y: yCheck});
-      if (bodiesFound.length > 0 && eraseType == "lighter" && bodiesFound[0].breakable) {
-        if (bodiesFound[0].breakage > 0){
-          bodiesFound[0].breakage -= 1;
+      
+      function checkAndPlayCrack(body) {
+        let newCrackLevel = 0;
+        if (body.breakage <= 100) newCrackLevel = 1;
+        if (body.breakage <= 80) newCrackLevel = 2;
+        if (body.breakage <= 60) newCrackLevel = 3;
+        if (body.breakage <= 40) newCrackLevel = 4;
+        if (body.breakage <= 20) newCrackLevel = 5;
+        if (body.breakage <= 10) newCrackLevel = 6;
+        
+        // Only play sound for even-numbered levels (2, 4, 6)
+        if (newCrackLevel > body.crackLevel && newCrackLevel % 2 === 0) {
+          crackSound.play();
         }
-        else{
+        body.crackLevel = newCrackLevel;
+      }
+      
+      if (bodiesFound.length > 0 && eraseType == "lighter" && bodiesFound[0].breakable) {
+        if (bodiesFound[0].breakage > 0) {
+          bodiesFound[0].breakage -= 1;
+          checkAndPlayCrack(bodiesFound[0]);
+        } else {
           Matter.World.remove(world, bodiesFound[0]);
-          breakSound.play(); // Play sound when block is removed
+          breakSound.play();
         }
       }
+      
       if (bodiesFound.length > 0 && bodiesFound[0].breakable && eraseType === "pinch") {
         Matter.World.remove(world, bodiesFound[0]);
-        breakSound.play(); // Play sound when block is removed
-        //console.log("Erased a brick at:", { xCheck, yCheck });
-      } else {
-        //console.log("No bricks found to erase.");
+        breakSound.play();
       }
+      
       if (bodiesFound.length > 0 && bodiesFound[0].breakable && eraseType == "fistPump") {
-        console.log(BRICK_WIDTH);
-        console.log(BRICK_HEIGHT);
         for (let col = -BRICK_WIDTH; col <= BRICK_WIDTH; col += BRICK_WIDTH) {
-          console.log("bodyHere");
           for (let row = -BRICK_HEIGHT; row <= BRICK_HEIGHT; row += BRICK_HEIGHT) {
-            // Handles breakage of each block in 5x5 grid
             let tempBodies = Matter.Query.point(Matter.Composite.allBodies(world), {x: xCheck+col, y: yCheck+row})
             if (tempBodies.length > 0 && tempBodies[0].breakable) {
-              // Left/Right edges
               if (((col == -BRICK_WIDTH ) || (col == BRICK_WIDTH )) && ((row != -BRICK_HEIGHT ) || (row != BRICK_HEIGHT )) && tempBodies[0].breakable) {
-                if (tempBodies[0].breakage > 20 && tempBodies[0].breakable){
+                if (tempBodies[0].breakage > 20 && tempBodies[0].breakable) {
                   tempBodies[0].breakage -= 50;
-                }
-                else if (tempBodies[0].breakable){
+                  checkAndPlayCrack(tempBodies[0]);
+                } else if (tempBodies[0].breakable) {
                   Matter.World.remove(world, tempBodies[0]);
-                  breakSound.play(); // Play sound when block is removed
+                  breakSound.play();
                 }
-              }
-              // Top/bottom edges
-              else if (((col != -BRICK_WIDTH ) || (col != BRICK_WIDTH )) && (row == -BRICK_HEIGHT ) || (row == BRICK_HEIGHT ) && tempBodies[0].breakable) {
-                if (tempBodies[0].breakage > 20){
+              } else if (((col != -BRICK_WIDTH ) || (col != BRICK_WIDTH )) && (row == -BRICK_HEIGHT ) || (row == BRICK_HEIGHT ) && tempBodies[0].breakable) {
+                if (tempBodies[0].breakage > 20) {
                   tempBodies[0].breakage -= 50;
-                }
-                else if (tempBodies[0].breakable){
+                  checkAndPlayCrack(tempBodies[0]);
+                } else if (tempBodies[0].breakable) {
                   Matter.World.remove(world, tempBodies[0]);
-                  breakSound.play(); // Play sound when block is removed
+                  breakSound.play();
                 }
-              }
-              // Center
-              else if (col == 0 && row == 0 && tempBodies[0].breakable){
+              } else if (col == 0 && row == 0 && tempBodies[0].breakable) {
                 Matter.World.remove(world, tempBodies[0]);
-                breakSound.play(); // Play sound when block is removed
+                breakSound.play();
               }
             }
           }
@@ -682,7 +694,8 @@ document.addEventListener('DOMContentLoaded', () => {
               friction: 0.5,
               density: 1,
               breakable: true,
-              breakage: 100
+              breakage: 100,
+              crackLevel: 0  // Add this to track current crack pattern
             }
           );
           World.add(world, brick);
