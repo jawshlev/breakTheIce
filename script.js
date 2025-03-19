@@ -85,6 +85,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let fistDetectedFrames = 0;
   const detectionThreshold = 5;
 
+  // Add this with other state variables at the top
+  let breakSound;
 
   // Initialize p5.js sketch
   new p5((p) => {
@@ -108,6 +110,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     p.setup = () => {
+      // Add this at the start of setup
+      breakSound = p.loadSound('assets/breaksound.mp3', 
+        () => console.log('Sound loaded successfully'),
+        (err) => console.error('Failed to load sound:', err)
+      );
+
       // Create canvas that fills the container
       const canvasContainer = document.getElementById("canvas-container")
       const canvas = p.createCanvas(canvasContainer.offsetWidth, canvasContainer.offsetHeight)
@@ -309,10 +317,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         else{
           Matter.World.remove(world, bodiesFound[0]);
+          breakSound.play(); // Play sound when block is removed
         }
       }
       if (bodiesFound.length > 0 && bodiesFound[0].breakable && eraseType === "pinch") {
         Matter.World.remove(world, bodiesFound[0]);
+        breakSound.play(); // Play sound when block is removed
         //console.log("Erased a brick at:", { xCheck, yCheck });
       } else {
         //console.log("No bricks found to erase.");
@@ -333,6 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 else if (tempBodies[0].breakable){
                   Matter.World.remove(world, tempBodies[0]);
+                  breakSound.play(); // Play sound when block is removed
                 }
               }
               // Top/bottom edges
@@ -342,11 +353,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 else if (tempBodies[0].breakable){
                   Matter.World.remove(world, tempBodies[0]);
+                  breakSound.play(); // Play sound when block is removed
                 }
               }
               // Center
               else if (col == 0 && row == 0 && tempBodies[0].breakable){
                 Matter.World.remove(world, tempBodies[0]);
+                breakSound.play(); // Play sound when block is removed
               }
             }
           }
