@@ -158,6 +158,8 @@ document.addEventListener('DOMContentLoaded', () => {
           p.mouseY > 0 && 
           p.mouseX < p.width && 
           p.mouseY < p.height) {
+            //console.log({x: p.mouseX, y: p.mouseY});
+            //console.log({x: p.width/2, y: p.height/2})
         eraseCheck({x: p.mouseX, y: p.mouseY}, "fistPump");
       }
 
@@ -305,12 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
       //console.log({xCheck, yCheck});
       let bodiesFound = Matter.Query.point(Matter.Composite.allBodies(world), {x: xCheck, y: yCheck});
       if (bodiesFound.length > 0 && eraseType == "lighter" && bodiesFound[0].breakable) {
-        if (bodiesFound[0].breakage > 0){
-          bodiesFound[0].breakage -= 1;
-        }
-        else{
-          Matter.World.remove(world, bodiesFound[0]);
-        }
+        breaker(tempBodies[0], 1);
       }
       if (bodiesFound.length > 0 && bodiesFound[0].breakable && eraseType === "pinch") {
         Matter.World.remove(world, bodiesFound[0]);
@@ -318,40 +315,68 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         //console.log("No bricks found to erase.");
       }
+      //  Remove length+break checks for final punch if single instance given
       if (bodiesFound.length > 0 && bodiesFound[0].breakable && eraseType == "fistPump") {
         console.log(BRICK_WIDTH);
         console.log(BRICK_HEIGHT);
-        for (let col = -BRICK_WIDTH; col <= BRICK_WIDTH; col += BRICK_WIDTH) {
+        for (let col = -3*BRICK_WIDTH; col <= 3*BRICK_WIDTH; col += BRICK_WIDTH) {
           console.log("bodyHere");
-          for (let row = -BRICK_HEIGHT; row <= BRICK_HEIGHT; row += BRICK_HEIGHT) {
+          for (let row = -3*BRICK_HEIGHT; row <= 3*BRICK_HEIGHT; row += BRICK_HEIGHT) {
             // Handles breakage of each block in 5x5 grid
-            let tempBodies = Matter.Query.point(Matter.Composite.allBodies(world), {x: xCheck+col, y: yCheck+row})
+            let tempBodies = Matter.Query.point(Matter.Composite.allBodies(world), {x: p.width/2 + col, y: p.height/2 + row}) //{x: xCheck+col, y: yCheck+row})
             if (tempBodies.length > 0) {
               // Left/Right edges
-              if (((col == -BRICK_WIDTH ) || (col == BRICK_WIDTH )) && tempBodies[0].breakable) {
-                if (tempBodies[0].breakage > 20){
-                  tempBodies[0].breakage -= 50;
+              if (((col == -3*BRICK_WIDTH ) || (col == 3*BRICK_WIDTH )) && row == 0 && tempBodies[0].breakable) {
+                breaker(tempBodies[0], 25);
+              }
+              //  Second col + mirror
+              else if (((col == -2*BRICK_WIDTH ) || (col == 2*BRICK_WIDTH )) && tempBodies[0].breakable) {
+                if ((row == -BRICK_HEIGHT ) || (row == BRICK_HEIGHT )) {
+                  breaker(tempBodies[0], 25);
                 }
-                else{
-                  Matter.World.remove(world, tempBodies[0]);
+                else if (row == 0) {
+                  breaker(tempBodies[0], 50);
                 }
               }
-              // Top/bottom edges
-              else if (((col != -BRICK_WIDTH ) && (col != BRICK_WIDTH )) && (row == -BRICK_HEIGHT ) || (row == BRICK_HEIGHT ) && tempBodies[0].breakable) {
-                if (tempBodies[0].breakage > 20){
-                  tempBodies[0].breakage -= 50;
+              //  Third col + mirror
+              else if (((col == -BRICK_WIDTH ) || (col == BRICK_WIDTH )) && tempBodies[0].breakable) {
+                if ((row == -2*BRICK_HEIGHT ) || (row == 2*BRICK_HEIGHT )) {
+                  breaker(tempBodies[0], 25);
                 }
-                else{
-                  Matter.World.remove(world, tempBodies[0]);
+                else if ((row == -BRICK_HEIGHT ) || (row == BRICK_HEIGHT )) {
+                  breaker(tempBodies[0], 50);
+                }
+                else if (row == 0) {
+                  breaker(tempBodies[0], 75);
                 }
               }
-              // Center
-              else if (col == 0 && row == 0 && tempBodies[0].breakable){
-                Matter.World.remove(world, tempBodies[0]);
+              // Center col
+              else if (col == 0 && tempBodies[0].breakable) {
+                if ((row == -3*BRICK_HEIGHT ) || (row == 3*BRICK_HEIGHT )) {
+                  breaker(tempBodies[0], 25);
+                }
+                else if ((row == -2*BRICK_HEIGHT ) || (row == 2*BRICK_HEIGHT )) {
+                  breaker(tempBodies[0], 50);
+                }
+                else if ((row == -BRICK_HEIGHT ) || (row == BRICK_HEIGHT )) {
+                  breaker(tempBodies[0], 75);
+                }
+                else if (row == 0) {
+                  Matter.World.remove(world, tempBodies[0]);
+                }
               }
             }
           }
         }
+      }
+    }
+
+    function breaker(iceCube, breakage) {
+      if (iceCube.breakage > breakage){
+        iceCube.breakage -= breakage;
+      }
+      else{
+        Matter.World.remove(world, iceCube);
       }
     }
 
