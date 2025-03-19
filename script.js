@@ -166,6 +166,31 @@ document.addEventListener('DOMContentLoaded', () => {
       maskBuffer.clear();
       maskBuffer.background(0); // Black background (masked out)
       
+      const bodies = Matter.Composite.allBodies(world);
+      bodies.forEach(body => {
+        if (body.isStatic) {
+          // Draw static bodies (walls and ground) to the mask buffer
+          maskBuffer.fill(255); // White for visible areas
+          maskBuffer.stroke(0); // Black outline
+          maskBuffer.strokeWeight(1);
+          maskBuffer.beginShape();
+          body.vertices.forEach(vertex => {
+            maskBuffer.vertex(vertex.x, vertex.y);
+          });
+          maskBuffer.endShape(maskBuffer.CLOSE);
+        } else {
+          // For ice blocks, draw to mask buffer as before
+          maskBuffer.fill(255);
+          maskBuffer.stroke(0);
+          maskBuffer.strokeWeight(1);
+          maskBuffer.beginShape();
+          body.vertices.forEach(vertex => {
+            maskBuffer.vertex(vertex.x, vertex.y);
+          });
+          maskBuffer.endShape(maskBuffer.CLOSE);
+        }
+      });
+      
       // Draw the ice texture first
       p.image(iceTexture, 0, 0, p.width, p.height);
       
@@ -223,33 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
         shiftedFistEllipse = { x: fistEllipse.x, y: Math.max(fistEllipse.y - 250, 0) };
       }
 
-      const bodies = Matter.Composite.allBodies(world);
-      bodies.forEach(body => {
-        if (body.isStatic) {
-          // Walls and boundaries remain solid color
-          p.fill(135, 206, 235);
-          p.stroke(100, 149, 237);
-          p.strokeWeight(2);
-          
-          p.beginShape();
-          body.vertices.forEach(vertex => {
-            p.vertex(vertex.x, vertex.y);
-          });
-          p.endShape(p.CLOSE);
-        } else {
-          // For ice blocks, draw white shapes to the mask buffer
-          maskBuffer.fill(255); // White for visible areas
-          maskBuffer.stroke(0); // Black outline
-          maskBuffer.strokeWeight(1); // Thin outline
-          maskBuffer.beginShape();
-          body.vertices.forEach(vertex => {
-            maskBuffer.vertex(vertex.x, vertex.y);
-          });
-          maskBuffer.endShape(p.CLOSE);
-        }
-      });
-      
-      // Apply the mask
+      // Apply the mask to all bodies including walls
       p.push();
       p.blendMode(p.MULTIPLY);
       p.image(maskBuffer, 0, 0);
@@ -326,13 +325,13 @@ document.addEventListener('DOMContentLoaded', () => {
           for (let row = -BRICK_HEIGHT; row <= BRICK_HEIGHT; row += BRICK_HEIGHT) {
             // Handles breakage of each block in 5x5 grid
             let tempBodies = Matter.Query.point(Matter.Composite.allBodies(world), {x: xCheck+col, y: yCheck+row})
-            if (tempBodies.length > 0) {
+            if (tempBodies.length > 0 && tempBodies[0].breakable) {
               // Left/Right edges
               if (((col == -BRICK_WIDTH ) || (col == BRICK_WIDTH )) && ((row != -BRICK_HEIGHT ) || (row != BRICK_HEIGHT )) && tempBodies[0].breakable) {
-                if (tempBodies[0].breakage > 20){
+                if (tempBodies[0].breakage > 20 && tempBodies[0].breakable){
                   tempBodies[0].breakage -= 50;
                 }
-                else{
+                else if (tempBodies[0].breakable){
                   Matter.World.remove(world, tempBodies[0]);
                 }
               }
@@ -341,7 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (tempBodies[0].breakage > 20){
                   tempBodies[0].breakage -= 50;
                 }
-                else{
+                else if (tempBodies[0].breakable){
                   Matter.World.remove(world, tempBodies[0]);
                 }
               }
