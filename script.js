@@ -178,9 +178,9 @@ document.addEventListener('DOMContentLoaded', () => {
           p.mouseY > 0 && 
           p.mouseX < p.width && 
           p.mouseY < p.height) {
-            //console.log({x: p.mouseX, y: p.mouseY});
+            console.log({x: p.mouseX, y: p.mouseY});
             //console.log({x: p.width/2, y: p.height/2})
-        eraseCheck({x: p.mouseX, y: p.mouseY}, "fistPump");
+        //eraseCheck({x: p.mouseX, y: p.mouseY}, "fistPump");
       }
 
       
@@ -270,6 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
         waitingForInitialHit = true;
         shiftedFistEllipse = null;
         console.log("Fist pump detected!");
+        eraseCheck({x: 0, y: 0}, "fistPump")
       } else if (waitingForInitialHit && fistEllipse && checkFistCollision(fistEllipse)) {
         waitingForInitialHit = false;
         shiftedFistEllipse = { x: fistEllipse.x, y: Math.max(fistEllipse.y - 250, 0) };
