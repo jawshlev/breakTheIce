@@ -371,7 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let col = -4*BRICK_WIDTH; col <= 4*BRICK_WIDTH; col += BRICK_WIDTH) {
           console.log("bodyHere");
           for (let row = -4*BRICK_HEIGHT; row <= 4*BRICK_HEIGHT; row += BRICK_HEIGHT) {
-            // Handles breakage of each block in 5x5 grid
+            // Handles breakage of each block in 11x11 grid
             let tempBodies = Matter.Query.point(Matter.Composite.allBodies(world), {x: p.width/2 + col, y: p.height/2 + row}) //{x: xCheck+col, y: yCheck+row})
             if (tempBodies.length > 0) {
               // Left/Right edges
@@ -474,7 +474,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
       if (fingersClosed && !thumbIsClosed) {  
         const thumbPosition = fingerPos(4);  // Get thumb position
-        if (thumbPosition !== null) {  
+        if (thumbPosition !== null) { 
+          p.textSize(80);
+          p.textAlign(p.CENTER, p.CENTER);
+          p.text("🔥", thumbPosition.x, thumbPosition.y);  
           return {x: thumbPosition.x, y: thumbPosition.y};
         }
       }
