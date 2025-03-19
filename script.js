@@ -189,18 +189,18 @@ document.addEventListener('DOMContentLoaded', () => {
       p.stroke(100, 149, 237); // Darker blue outline
       p.strokeWeight(2); // Outline thickness
       
-      // if (fistEllipse) {
-      //   p.push();
-      //   p.fill(255, 0, 0, 150); // Red with transparency
-      //   p.ellipse(fistEllipse.x, fistEllipse.y, 400, 50);
-      //   p.pop();
-      // }
-      // if (shiftedFistEllipse) {
-      //   p.push();
-      //   p.fill(0, 255, 0, 150); // Green with transparency
-      //   p.ellipse(shiftedFistEllipse.x, shiftedFistEllipse.y, 400, 50);
-      //   p.pop();
-      // }
+      if (fistEllipse) {
+        p.push();
+        p.fill(255, 0, 0, 150); // Red with transparency
+        p.ellipse(fistEllipse.x, fistEllipse.y, 400, 50);
+        p.pop();
+      }
+      if (shiftedFistEllipse) {
+        p.push();
+        p.fill(0, 255, 0, 150); // Green with transparency
+        p.ellipse(shiftedFistEllipse.x, shiftedFistEllipse.y, 400, 50);
+        p.pop();
+      }
 
       if (fistMade()) {
         fistDetectedFrames++;
@@ -319,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
       //console.log({xCheck, yCheck});
       let bodiesFound = Matter.Query.point(Matter.Composite.allBodies(world), {x: xCheck, y: yCheck});
       if (bodiesFound.length > 0 && eraseType == "lighter" && bodiesFound[0].breakable) {
-        breaker(tempBodies[0], 1);
+        breaker(bodiesFound[0], 1);
       }
       if (bodiesFound.length > 0 && bodiesFound[0].breakable && eraseType === "pinch") {
         Matter.World.remove(world, bodiesFound[0]);
