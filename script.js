@@ -328,7 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let tempBodies = Matter.Query.point(Matter.Composite.allBodies(world), {x: xCheck+col, y: yCheck+row})
             if (tempBodies.length > 0) {
               // Left/Right edges
-              if (((col == -BRICK_WIDTH ) || (col == BRICK_WIDTH )) && ((row != -BRICK_HEIGHT ) || (row != BRICK_HEIGHT )) && tempBodies[0].breakable) {
+              if (((col == -BRICK_WIDTH ) || (col == BRICK_WIDTH )) && tempBodies[0].breakable) {
                 if (tempBodies[0].breakage > 20){
                   tempBodies[0].breakage -= 50;
                 }
@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
               }
               // Top/bottom edges
-              else if (((col != -BRICK_WIDTH ) || (col != BRICK_WIDTH )) && (row == -BRICK_HEIGHT ) || (row == BRICK_HEIGHT ) && tempBodies[0].breakable) {
+              else if (((col != -BRICK_WIDTH ) && (col != BRICK_WIDTH )) && (row == -BRICK_HEIGHT ) || (row == BRICK_HEIGHT ) && tempBodies[0].breakable) {
                 if (tempBodies[0].breakage > 20){
                   tempBodies[0].breakage -= 50;
                 }
