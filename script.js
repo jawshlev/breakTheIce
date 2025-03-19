@@ -89,6 +89,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   //gif
   var gifImage;
+  // Add this with other state variables at the top
+  let breakSound;
+  let crackSound;
 
   // Initialize p5.js sketch
   new p5((p) => {
@@ -113,6 +116,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     p.setup = () => {
+      // Add this with your other sound load
+      breakSound = p.loadSound('assets/breaksound.mp3', 
+        () => console.log('Break sound loaded successfully'),
+        (err) => console.error('Failed to load break sound:', err)
+      );
+      
+      crackSound = p.loadSound('assets/crack.mp3',
+        () => console.log('Crack sound loaded successfully'),
+        (err) => console.error('Failed to load crack sound:', err)
+      );
+
       // Create canvas that fills the container
       const canvasContainer = document.getElementById("canvas-container")
       const canvas = p.createCanvas(canvasContainer.offsetWidth, canvasContainer.offsetHeight)
@@ -178,6 +192,31 @@ document.addEventListener('DOMContentLoaded', () => {
         maskBuffer.background(0); // Fallback black background
       } // Black background (masked out)
       
+      const bodies = Matter.Composite.allBodies(world);
+      bodies.forEach(body => {
+        if (body.isStatic) {
+          // Draw static bodies (walls and ground) to the mask buffer
+          maskBuffer.fill(255); // White for visible areas
+          maskBuffer.stroke(0); // Black outline
+          maskBuffer.strokeWeight(1);
+          maskBuffer.beginShape();
+          body.vertices.forEach(vertex => {
+            maskBuffer.vertex(vertex.x, vertex.y);
+          });
+          maskBuffer.endShape(maskBuffer.CLOSE);
+        } else {
+          // For ice blocks, draw to mask buffer as before
+          maskBuffer.fill(255);
+          maskBuffer.stroke(0);
+          maskBuffer.strokeWeight(1);
+          maskBuffer.beginShape();
+          body.vertices.forEach(vertex => {
+            maskBuffer.vertex(vertex.x, vertex.y);
+          });
+          maskBuffer.endShape(maskBuffer.CLOSE);
+        }
+      });
+      
       // Draw the ice texture first
       p.image(iceTexture, 0, 0, p.width, p.height);
       
@@ -237,33 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Fist reset!");
       }
 
-      const bodies = Matter.Composite.allBodies(world);
-      bodies.forEach(body => {
-        if (body.isStatic) {
-          // Walls and boundaries remain solid color
-          p.fill(135, 206, 235);
-          p.stroke(100, 149, 237);
-          p.strokeWeight(2);
-          
-          p.beginShape();
-          body.vertices.forEach(vertex => {
-            p.vertex(vertex.x, vertex.y);
-          });
-          p.endShape(p.CLOSE);
-        } else {
-          // For ice blocks, draw white shapes to the mask buffer
-          maskBuffer.fill(255); // White for visible areas
-          maskBuffer.stroke(0); // Black outline
-          maskBuffer.strokeWeight(1); // Thin outline
-          maskBuffer.beginShape();
-          body.vertices.forEach(vertex => {
-            maskBuffer.vertex(vertex.x, vertex.y);
-          });
-          maskBuffer.endShape(p.CLOSE);
-        }
-      });
-      
-      // Apply the mask
+      // Apply the mask to all bodies including walls
       p.push();
       p.blendMode(p.MULTIPLY);
       p.image(maskBuffer, 0, 0);
@@ -313,19 +326,42 @@ document.addEventListener('DOMContentLoaded', () => {
       handPointCircles()
     }
 
+    function checkAndPlayCrack(body) {
+      let newCrackLevel = 0;
+      if (body.breakage <= 100) newCrackLevel = 1;
+      if (body.breakage <= 80) newCrackLevel = 2;
+      if (body.breakage <= 60) newCrackLevel = 3;
+      if (body.breakage <= 40) newCrackLevel = 4;
+      if (body.breakage <= 20) newCrackLevel = 5;
+      if (body.breakage <= 10) newCrackLevel = 6;
+      
+      // Only play sound for even-numbered levels (2, 4, 6)
+      if (newCrackLevel > body.crackLevel && newCrackLevel % 2 === 0) {
+        crackSound.play();
+      }
+      body.crackLevel = newCrackLevel;
+    }
     
     
     function eraseCheck({x: xCheck, y: yCheck}, eraseType) {
-      //console.log({xCheck, yCheck});
       let bodiesFound = Matter.Query.point(Matter.Composite.allBodies(world), {x: xCheck, y: yCheck});
       if (bodiesFound.length > 0 && eraseType == "lighter" && bodiesFound[0].breakable) {
         breaker(bodiesFound[0], 1);
       }
+      
+      if (bodiesFound.length > 0 && eraseType == "lighter" && bodiesFound[0].breakable) {
+        if (bodiesFound[0].breakage > 0) {
+          bodiesFound[0].breakage -= 1;
+          checkAndPlayCrack(bodiesFound[0]);
+        } else {
+          Matter.World.remove(world, bodiesFound[0]);
+          breakSound.play();
+        }
+      }
+      
       if (bodiesFound.length > 0 && bodiesFound[0].breakable && eraseType === "pinch") {
         Matter.World.remove(world, bodiesFound[0]);
-        //console.log("Erased a brick at:", { xCheck, yCheck });
-      } else {
-        //console.log("No bricks found to erase.");
+        breakSound.play();
       }
       //  Remove length+break checks for final punch if single instance given
       if (bodiesFound.length > 0 && bodiesFound[0].breakable && eraseType == "fistPump") {
@@ -385,10 +421,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function breaker(iceCube, breakage) {
       if (iceCube.breakage > breakage){
+        checkAndPlayCrack(iceCube);
         iceCube.breakage -= breakage;
       }
       else{
         Matter.World.remove(world, iceCube);
+        breakSound.play();
       }
     }
 
@@ -701,7 +739,8 @@ document.addEventListener('DOMContentLoaded', () => {
               friction: 0.5,
               density: 1,
               breakable: true,
-              breakage: 100
+              breakage: 100,
+              crackLevel: 0  // Add this to track current crack pattern
             }
           );
           World.add(world, brick);
